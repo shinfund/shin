@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>주전기실 전력 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --h1:#0a2540; --h2:#1a4f8a; --h3:#2563eb; --h4:#3b82f6; --h5:#60a5fa;
+  --bg:#f0f6ff; --white:#fff; --s1:#f8fbff; --s2:#eef4ff;
+  --bdr:#c7d9f5; --bdr2:#dde8fb;
+  --tx:#0f2542; --tx2:#1e3a5f; --tx3:#3d5a80;
+  --dm:#6b8ab0; --dm2:#9db4cc;
+  --gn:#065f46; --gn2:#059669; --gnb:#d1fae5;
+  --rd:#991b1b; --rdb:#fee2e2;
+  --yl:#78350f; --ylb:#fef3c7;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Noto Sans KR',sans-serif;
+  --sh:0 2px 8px rgba(10,37,64,.1);
+  --sh2:0 4px 20px rgba(10,37,64,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100vh;}
+
+/* ── NAV ── */
+nav{
+  height:56px;
+  background:linear-gradient(135deg,var(--h1) 0%,var(--h2) 55%,var(--h3) 100%);
+  display:flex;align-items:center;padding:0 24px;gap:14px;
+  box-shadow:0 2px 12px rgba(10,37,64,.25);
+  position:sticky;top:0;z-index:100;
+}
+nav::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 48px,rgba(255,255,255,.02) 48px,rgba(255,255,255,.02) 49px);
+  pointer-events:none;
+}
+.nav-bar{width:3px;height:28px;background:linear-gradient(180deg,#93c5fd,#3b82f6);border-radius:2px;flex-shrink:0;}
+.nav-logo{display:flex;flex-direction:column;}
+.nav-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px;}
+.nav-sub{font-size:8.5px;color:#93c5fd;letter-spacing:1.5px;margin-top:1px;}
+.nav-links{display:flex;gap:4px;margin-left:auto;}
+.nav-link{
+  padding:6px 14px;font-size:11px;font-weight:600;color:#bfdbfe;
+  border-radius:6px;text-decoration:none;
+  transition:all .2s;border:1px solid transparent;
+}
+.nav-link:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.15);}
+.nav-link.active{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);}
+.nav-clk{font-family:var(--mono);font-size:10px;color:#93c5fd;margin-left:8px;white-space:nowrap;}
+@media(max-width:600px){.nav-sub{display:none;}.nav-link span{display:none;}.nav-link{padding:6px 10px;}.nav-clk{display:none;}}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(135deg,var(--h1) 0%,var(--h2) 50%,var(--h3) 100%);
+  padding:56px 24px 64px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%,rgba(96,165,250,.15) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 50%,rgba(37,99,235,.2) 0%,transparent 60%),
+    repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,255,255,.02) 60px,rgba(255,255,255,.02) 61px);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  border-radius:20px;padding:4px 14px;font-size:9.5px;color:#93c5fd;
+  letter-spacing:1.5px;font-weight:600;margin-bottom:20px;
+  font-family:var(--mono);
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;animation:bk 2s infinite;}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(22px,5vw,38px);font-weight:700;color:#fff;line-height:1.25;margin-bottom:14px;letter-spacing:-.3px;}
+.hero h1 em{color:#60a5fa;font-style:normal;}
+.hero p{font-size:14px;color:#93c5fd;line-height:1.7;max-width:560px;margin:0 auto 32px;}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;
+  text-decoration:none;transition:all .2s;border:none;cursor:pointer;
+  font-family:var(--sans);
+}
+.btn-primary{background:#fff;color:var(--h2);}
+.btn-primary:hover{background:#eff6ff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(255,255,255,.2);}
+.btn-outline{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.3);}
+.btn-outline:hover{background:rgba(255,255,255,.18);transform:translateY(-1px);}
+
+/* ── STATUS BAR ── */
+.status-bar{
+  background:var(--white);border-bottom:1px solid var(--bdr);
+  display:flex;flex-wrap:wrap;gap:0;
+  box-shadow:var(--sh);
+}
+.status-item{
+  flex:1;min-width:140px;
+  display:flex;align-items:center;gap:10px;
+  padding:14px 20px;border-right:1px solid var(--bdr2);
+}
+.status-item:last-child{border-right:none;}
+.si-icon{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.si-icon.blue{background:#eff6ff;}
+.si-icon.green{background:#d1fae5;}
+.si-icon.yellow{background:#fef3c7;}
+.si-icon.red{background:#fee2e2;}
+.si-label{font-size:9px;color:var(--dm);font-weight:500;margin-bottom:2px;letter-spacing:.5px;}
+.si-value{font-size:15px;font-weight:700;font-family:var(--mono);}
+.si-value.blue{color:var(--h3);}
+.si-value.green{color:var(--gn2);}
+.si-value.yellow{color:#ca8a04;}
+.si-value.red{color:var(--rd);}
+
+/* ── MAIN GRID ── */
+.container{max-width:1100px;margin:0 auto;padding:32px 20px 60px;}
+.section-label{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+}
+.section-label .bar{width:3px;height:18px;background:var(--h3);border-radius:2px;}
+.section-label h2{font-size:15px;font-weight:700;color:var(--h2);}
+.section-label .tag{
+  font-size:8.5px;font-family:var(--mono);
+  background:var(--s2);border:1px solid var(--bdr);
+  border-radius:10px;padding:2px 9px;color:var(--dm);
+}
+
+/* ── CARD GRID ── */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+  margin-bottom:40px;
+}
+.card{
+  background:var(--white);border:1px solid var(--bdr);
+  border-radius:10px;overflow:hidden;
+  box-shadow:var(--sh);
+  transition:transform .2s,box-shadow .2s;
+  text-decoration:none;color:inherit;
+  display:flex;flex-direction:column;
+}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sh2);}
+.card-header{
+  padding:14px 16px 10px;
+  border-bottom:1px solid var(--bdr2);
+  display:flex;align-items:center;gap:10px;
+}
+.card-icon{
+  width:40px;height:40px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.card-icon.blue{background:linear-gradient(135deg,#dbeafe,#eff6ff);}
+.card-icon.green{background:linear-gradient(135deg,#d1fae5,#ecfdf5);}
+.card-icon.yellow{background:linear-gradient(135deg,#fef9c3,#fefce8);}
+.card-icon.navy{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;}
+.card-meta{}
+.card-name{font-size:13px;font-weight:700;color:var(--h2);}
+.card-desc{font-size:10px;color:var(--dm);margin-top:1px;}
+.card-body{padding:12px 16px;flex:1;}
+.card-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0;border-bottom:1px solid var(--bdr2);font-size:11px;
+}
+.card-row:last-child{border-bottom:none;}
+.cr-label{color:var(--dm);font-weight:500;}
+.cr-value{font-weight:700;font-family:var(--mono);}
+.cr-value.a{color:var(--h3)}.cr-value.g{color:var(--gn2)}.cr-value.y{color:#ca8a04}.cr-value.r{color:var(--rd)}
+.card-footer{
+  padding:10px 16px;background:var(--s1);border-top:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.cf-status{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;}
+.cf-dot{width:7px;height:7px;border-radius:50%;}
+.cf-dot.ok{background:var(--gn2);box-shadow:0 0 5px var(--gn2);}
+.cf-dot.warn{background:#f59e0b;box-shadow:0 0 5px #f59e0b);}
+.cf-dot.err{background:var(--rd);animation:bk 1.2s infinite;}
+.cf-ok{color:var(--gn);}
+.cf-warn{color:#b45309;}
+.cf-err{color:var(--rd);}
+.cf-arrow{font-size:14px;color:var(--dm2);}
+
+/* ── MENU CARDS ── */
+.menu-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:14px;
+  margin-bottom:40px;
+}
+.menu-card{
+  background:var(--white);border:1px solid var(--bdr);
+  border-radius:10px;padding:20px 18px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  text-decoration:none;color:inherit;
+  box-shadow:var(--sh);transition:all .2s;cursor:pointer;
+}
+.menu-card:hover{transform:translateY(-2px);box-shadow:var(--sh2);border-color:var(--h4);}
+.mc-icon{font-size:24px;margin-bottom:2px;}
+.mc-name{font-size:13px;font-weight:700;color:var(--h2);}
+.mc-desc{font-size:10px;color:var(--dm);line-height:1.5;}
+.mc-arrow{
+  margin-top:auto;align-self:flex-end;
+  width:28px;height:28px;border-radius:50%;
+  background:var(--s2);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--h3);transition:all .2s;
+}
+.menu-card:hover .mc-arrow{background:var(--h3);color:#fff;border-color:var(--h3);}
+
+/* ── ALERT BOX ── */
+.alert{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 16px;border-radius:8px;
+  margin-bottom:12px;font-size:12px;line-height:1.6;
+}
+.alert.err{background:var(--rdb);border:1px solid #fca5a5;color:var(--rd);}
+.alert.warn{background:var(--ylb);border:1px solid #fcd34d;color:var(--yl);}
+.alert.ok{background:var(--gnb);border:1px solid #6ee7b7;color:var(--gn);}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-title{font-weight:700;margin-bottom:2px;font-size:11.5px;}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--h1);color:#4a7a9b;
+  padding:28px 24px;text-align:center;
+  font-size:11px;line-height:1.8;
+}
+footer strong{color:#6b9ab8;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-bar"></div>
+  <div class="nav-logo">
+    <div class="nav-title">주전기실 전력 관리 시스템</div>
+    <div class="nav-sub">TUNNEL ELECTRICAL SCADA SYSTEM</div>
+  </div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link active">홈</a>
+    <a href="power_single_line_diagram.html" class="nav-link">간선도</a>
+    <a href="load.html" class="nav-link">부하계측</a>
+    <a href="solar.html" class="nav-link">태양광</a>
+    <a href="alarm.html" class="nav-link">알람</a>
+  </div>
+  <div class="nav-clk" id="clk"></div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><div class="dot"></div>SYSTEM ONLINE · LISAN</div>
+  <h1>터널 전기실<br><em>전력 관리 시스템</em></h1>
+  <p>한국도로공사 터널 주전기실 SCADA 대시보드입니다.<br>수전현황, 부하계측, 태양광 발전량을 실시간으로 모니터링합니다.</p>
+  <div class="hero-btns">
+    <a href="power_single_line_diagram.html" class="btn btn-primary">전력 간선도 보기</a>
+    <a href="load.html" class="btn btn-outline">부하 계측 현황</a>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-item">
+    <div class="si-icon blue">⚡</div>
+    <div>
+      <div class="si-label">KEPCO 수전전압</div>
+      <div class="si-value blue">22.9 kV</div>
+    </div>
+  </div>
+  <div class="status-item">
+    <div class="si-icon green">✓</div>
+    <div>
+      <div class="si-label">계통 주파수</div>
+      <div class="si-value green">60.0 Hz</div>
+    </div>
+  </div>
+  <div class="status-item">
+    <div class="si-icon yellow">☀</div>
+    <div>
+      <div class="si-label">태양광 총 출력</div>
+      <div class="si-value yellow">39.2 KW</div>
+    </div>
+  </div>
+  <div class="status-item">
+    <div class="si-icon blue">~</div>
+    <div>
+      <div class="si-label">총 유효전력</div>
+      <div class="si-value blue">234.4 KW</div>
+    </div>
+  </div>
+  <div class="status-item">
+    <div class="si-icon red">!</div>
+    <div>
+      <div class="si-label">현재 알람</div>
+      <div class="si-value red">1 건</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- 알람 -->
+  <div class="section-label" style="margin-top:0;">
+    <div class="bar"></div>
+    <h2>현재 알람</h2>
+    <div class="tag">ALARM</div>
+  </div>
+  <div class="alert err">
+    <div class="alert-icon">⚠</div>
+    <div>
+      <div class="alert-title">UPS-101 BYPASS 운전 중</div>
+      인버터 이상으로 BYPASS 모드로 전환되었습니다. 즉시 점검이 필요합니다. BAT-01 배터리 연결 상태를 확인하세요.
+    </div>
+  </div>
+  <div class="alert ok">
+    <div class="alert-icon">✓</div>
+    <div>
+      <div class="alert-title">KEPCO 수전 정상</div>
+      22.9kV 수전선로 2회선 모두 정상 운전 중입니다.
+    </div>
+  </div>
+
+  <!-- 주요 메뉴 -->
+  <div class="section-label">
+    <div class="bar"></div>
+    <h2>주요 메뉴</h2>
+    <div class="tag">MENU</div>
+  </div>
+  <div class="menu-grid">
+    <a href="power_single_line_diagram.html" class="menu-card">
+      <div class="mc-icon">📐</div>
+      <div class="mc-name">전력 간선도</div>
+      <div class="mc-desc">주전기실 단선결선도(SLD)<br>수전 ~ 부하 전체 계통도</div>
+      <div class="mc-arrow">→</div>
+    </a>
+    <a href="load.html" class="menu-card">
+      <div class="mc-icon">📊</div>
+      <div class="mc-name">부하 계측</div>
+      <div class="mc-desc">LV/HV 차단기별<br>3상 전압·전류·전력 계측</div>
+      <div class="mc-arrow">→</div>
+    </a>
+    <a href="solar.html" class="menu-card">
+      <div class="mc-icon">☀</div>
+      <div class="mc-name">태양광 발전</div>
+      <div class="mc-desc">태양광 #1·#2 인버터<br>출력 및 누적발전량</div>
+      <div class="mc-arrow">→</div>
+    </a>
+    <a href="alarm.html" class="menu-card">
+      <div class="mc-icon">🔔</div>
+      <div class="mc-name">알람 이력</div>
+      <div class="mc-desc">경보 발생·해제 이력<br>및 현재 알람 현황</div>
+      <div class="mc-arrow">→</div>
+    </a>
+  </div>
+
+  <!-- 수전 현황 카드 -->
+  <div class="section-label">
+    <div class="bar"></div>
+    <h2>수전 현황</h2>
+    <div class="tag">RECEIVING</div>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon blue">⚡</div>
+        <div class="card-meta">
+          <div class="card-name">HV-104 · VCB 630A</div>
+          <div class="card-desc">22.9kV 고압 주차단기 · ID01</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">R-S / S-T / T-R 전압</span><span class="cr-value a">22,952 / 22,927 / 23,014 V</span></div>
+        <div class="card-row"><span class="cr-label">R / S / T 전류</span><span class="cr-value g">2.2 / 2.3 / 2.2 A</span></div>
+        <div class="card-row"><span class="cr-label">유효전력</span><span class="cr-value y">87.4 KW</span></div>
+        <div class="card-row"><span class="cr-label">역률 / 주파수</span><span class="cr-value g">0.99PF / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적전력량</span><span class="cr-value a">300.98 MWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">운전중</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon blue">⚡</div>
+        <div class="card-meta">
+          <div class="card-name">HV-105 · VCB 630A</div>
+          <div class="card-desc">22.9kV 고압 차단기 · ID02</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">R-S / S-T / T-R 전압</span><span class="cr-value a">22,940 / 22,929 / 23,021 V</span></div>
+        <div class="card-row"><span class="cr-label">R / S / T 전류</span><span class="cr-value g">1.5 / 1.5 / 1.6 A</span></div>
+        <div class="card-row"><span class="cr-label">유효전력</span><span class="cr-value y">60.9 KW</span></div>
+        <div class="card-row"><span class="cr-label">역률 / 주파수</span><span class="cr-value g">0.99PF / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적전력량</span><span class="cr-value a">206.31 MWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">운전중</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon blue">⚡</div>
+        <div class="card-meta">
+          <div class="card-name">HV-106 · VCB 630A</div>
+          <div class="card-desc">22.9kV 고압 차단기 · ID03</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">R-S / S-T / T-R 전압</span><span class="cr-value a">22,959 / 22,959 / 23,022 V</span></div>
+        <div class="card-row"><span class="cr-label">R / S / T 전류</span><span class="cr-value y">0.7 / 0.7 / 0.6 A</span></div>
+        <div class="card-row"><span class="cr-label">유효전력</span><span class="cr-value y">25.9 KW</span></div>
+        <div class="card-row"><span class="cr-label">역률 / 주파수</span><span class="cr-value g">0.99PF / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적전력량</span><span class="cr-value a">87.25 MWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">경부하 운전</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon navy">×</div>
+        <div class="card-meta">
+          <div class="card-name">HV-107 · VCB 630A</div>
+          <div class="card-desc">22.9kV 고압 차단기 · ID04 미사용</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">R-S / S-T / T-R 전압</span><span class="cr-value" style="color:var(--dm2)">22,949 / 22,927 / 23,027 V</span></div>
+        <div class="card-row"><span class="cr-label">전류 (전체)</span><span class="cr-value" style="color:var(--dm2)">0.0 A (무부하)</span></div>
+        <div class="card-row"><span class="cr-label">유효전력</span><span class="cr-value" style="color:var(--dm2)">0.0 KW</span></div>
+        <div class="card-row"><span class="cr-label">PTR-102</span><span class="cr-value" style="color:var(--dm2)">400KVA 동력용</span></div>
+        <div class="card-row"><span class="cr-label">누적전력량</span><span class="cr-value" style="color:var(--dm2)">4.67 MWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot" style="background:var(--dm2);"></div><span style="color:var(--dm)">미사용 대기</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 부하 계측 카드 -->
+  <div class="section-label">
+    <div class="bar"></div>
+    <h2>저압 부하 계측</h2>
+    <div class="tag">380V LOAD</div>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon green">A</div>
+        <div class="card-meta">
+          <div class="card-name">LV-101 · ACB 630A</div>
+          <div class="card-desc">LTR-101 2차측 · 주명동 · ID05</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">R / S / T 전압</span><span class="cr-value y">381 / 381 / 381 V</span></div>
+        <div class="card-row"><span class="cr-label">R / S / T 전류</span><span class="cr-value g">88.4 / 94.7 / 93.0 A</span></div>
+        <div class="card-row"><span class="cr-label">유효전력</span><span class="cr-value g">59.7 KW</span></div>
+        <div class="card-row"><span class="cr-label">역률 / 주파수</span><span class="cr-value g">0.98PF / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적전력량</span><span class="cr-value a">201.90 MWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">운전중</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon green">A</div>
+        <div class="card-meta">
+          <div class="card-name">LV-105 · ACB 630A</div>
+          <div class="card-desc">PTR-101A 2차측 · 주명동 · ID06</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">R / S / T 전압</span><span class="cr-value y">381 / 381 / 382 V</span></div>
+        <div class="card-row"><span class="cr-label">R / S / T 전류</span><span class="cr-value g">47.0 / 38.1 / 31.4 A</span></div>
+        <div class="card-row"><span class="cr-label">유효전력</span><span class="cr-value g">25.2 KW</span></div>
+        <div class="card-row"><span class="cr-label">역률 / 주파수</span><span class="cr-value g">0.99PF / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적전력량</span><span class="cr-value a">84.99 MWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">운전중</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 태양광 카드 -->
+  <div class="section-label">
+    <div class="bar" style="background:#ca8a04;"></div>
+    <h2>태양광 발전 현황</h2>
+    <div class="tag">SOLAR PV</div>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon yellow">☀</div>
+        <div class="card-meta">
+          <div class="card-name">태양광 #1</div>
+          <div class="card-desc">주전기실 인버터 #1</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">PV 전압 / 전류</span><span class="cr-value a">568.0V / 52.0A</span></div>
+        <div class="card-row"><span class="cr-label">PV 출력</span><span class="cr-value y">29.7 KW</span></div>
+        <div class="card-row"><span class="cr-label">인버터 출력전압</span><span class="cr-value a">377.0 V</span></div>
+        <div class="card-row"><span class="cr-label">인버터 출력전류</span><span class="cr-value g">45.0 A</span></div>
+        <div class="card-row"><span class="cr-label">효율 / 주파수</span><span class="cr-value g">100% / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적발전량</span><span class="cr-value a">24,769.5 KWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">발전중</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon yellow">☀</div>
+        <div class="card-meta">
+          <div class="card-name">태양광 #2</div>
+          <div class="card-desc">주전기실 인버터 #2</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">PV 전압 / 전류</span><span class="cr-value a">478.0V / 20.0A</span></div>
+        <div class="card-row"><span class="cr-label">PV 출력</span><span class="cr-value y">9.5 KW</span></div>
+        <div class="card-row"><span class="cr-label">인버터 출력전압</span><span class="cr-value a">378.0 V</span></div>
+        <div class="card-row"><span class="cr-label">인버터 출력전류</span><span class="cr-value g">14.0 A</span></div>
+        <div class="card-row"><span class="cr-label">효율 / 주파수</span><span class="cr-value g">100% / 60.0Hz</span></div>
+        <div class="card-row"><span class="cr-label">누적발전량</span><span class="cr-value a">8,944.0 KWh</span></div>
+      </div>
+      <div class="card-footer">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">발전중</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:#fde68a;">
+      <div class="card-header" style="background:#fefce8;">
+        <div class="card-icon yellow">Σ</div>
+        <div class="card-meta">
+          <div class="card-name">발전 합계</div>
+          <div class="card-desc">태양광 #1 + #2</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="cr-label">총 출력</span><span class="cr-value y">39.2 KW</span></div>
+        <div class="card-row"><span class="cr-label">총 누적발전량</span><span class="cr-value a">33,713.5 KWh</span></div>
+        <div class="card-row"><span class="cr-label">평균 효율</span><span class="cr-value g">100.0 %</span></div>
+      </div>
+      <div class="card-footer" style="background:#fefce8;">
+        <div class="cf-status"><div class="cf-dot ok"></div><span class="cf-ok">전체 정상</span></div>
+        <span class="cf-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  <strong>LISAN · 한국도로공사</strong><br>
+  터널 전기 SCADA 시스템 · 주전기실 전력 관리 대시보드<br>
+  Tunnel Electrical Management System · Power Single-Line Diagram
+</footer>
+
+<script>
+function tick(){
+  document.getElementById('clk').textContent =
+    new Date().toLocaleString('ko-KR',{hour12:false});
+}
+tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>
