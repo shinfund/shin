@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>흥해터널</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ── CSS 변수 ── */
+:root{
+  --h1:#0a2540; --h2:#1a4f8a; --h3:#2563eb;
+  --bg:#f0f6ff; --white:#fff; --s1:#f8fbff; --s2:#eef4ff;
+  --bdr:#c7d9f5; --bdr2:#dde8fb;
+  --tx:#0f2542; --tx2:#1e3a5f; --tx3:#3d5a80;
+  --dm:#6b8ab0; --dm2:#9db4cc;
+  --gn:#065f46; --gn2:#059669; --gnb:#d1fae5;
+  --rd:#991b1b; --rdb:#fee2e2;
+  --yl:#78350f; --ylb:#fef3c7;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Noto Sans KR',sans-serif;
+  --sh:0 1px 4px rgba(10,37,64,.09);
+  --sh2:0 2px 10px rgba(10,37,64,.13);
+}
+
+/* ── 리셋 ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--tx);font-family:var(--sans);}
+
+/* ══════════════════════════════
+   HEADER
+══════════════════════════════ */
+#hdr{
+  height:50px;
+  background:linear-gradient(135deg,var(--h1) 0%,var(--h2) 55%,var(--h3) 100%);
+  display:flex;align-items:center;padding:0 18px;gap:12px;
+  box-shadow:0 2px 10px rgba(10,37,64,.22);
+  position:sticky;top:0;z-index:100;
+}
+.hbar{width:3px;height:26px;background:linear-gradient(180deg,#93c5fd,#3b82f6);border-radius:2px;flex-shrink:0;}
+.ht{font-size:15px;font-weight:700;color:#fff;letter-spacing:.4px;}
+.hs{font-size:9px;color:#93c5fd;letter-spacing:1.2px;margin-top:1px;}
+.hright{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.hpill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;padding:3px 10px;font-size:9px;color:#bfdbfe;font-weight:500;
+}
+.hpill .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot.ok{background:#4ade80;box-shadow:0 0 5px #4ade80;animation:bk 2s infinite;}
+.dot.warn{background:#fbbf24;box-shadow:0 0 5px #fbbf24;}
+.hclk{font-family:var(--mono);font-size:10px;color:#93c5fd;white-space:nowrap;}
+50%{opacity:.3}}
+@media(max-width:560px){.hpill{display:none;}.hs{display:none;}}
+
+/* ══════════════════════════════
+   이미지 업로드 툴바
+══════════════════════════════ */
+#img-toolbar{
+  width:100%;
+  background:linear-gradient(to bottom,#e8f0fe,#f0f6ff);
+  border-bottom:1px solid var(--bdr);
+  box-shadow:0 1px 6px rgba(10,37,64,.07);
+}
+#img-topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 18px;cursor:pointer;user-select:none;transition:background .2s;
+}
+#img-topbar:hover{background:rgba(37,99,235,.06);}
+.tb-icon{
+  width:30px;height:30px;border-radius:7px;
+  background:linear-gradient(135deg,var(--h2),var(--h3));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(37,99,235,.25);
+}
+.tb-label{display:flex;flex-direction:column;}
+.tb-title{font-size:11.5px;font-weight:700;color:var(--h2);}
+.tb-sub{font-size:9px;color:var(--dm);letter-spacing:.4px;margin-top:1px;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.tb-badge{
+  font-size:8.5px;font-family:var(--mono);
+  background:var(--s2);border:1px solid var(--bdr);
+  border-radius:10px;padding:2px 9px;color:var(--dm);font-weight:500;
+}
+.tb-toggle{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--s2);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--dm);transition:all .25s;
+}
+#img-toolbar.open .tb-toggle{transform:rotate(180deg);background:var(--h3);color:#fff;border-color:var(--h3);}
+
+/* 패널 — 기본 숨김, open 클래스 시 표시 */
+#img-panel{display:none;padding:0 18px 16px;}
+#img-toolbar.open #img-panel{display:block;}
+
+/* 드롭존 (label 태그) */
+#drop-zone{
+  display:block;
+  border:2px dashed var(--bdr);border-radius:10px;
+  padding:22px 16px;text-align:center;
+  background:var(--white);cursor:pointer;
+  transition:all .2s;position:relative;
+}
+#drop-zone:hover,#drop-zone.over{border-color:var(--h3);background:#eff6ff;}
+#drop-zone.has-file{border-color:var(--gn2);border-style:solid;background:#f0fdf4;}
+
+/* file input — 완전 숨김, label 클릭으로 대신 열림 */
+#file-input{position:absolute;width:0;height:0;opacity:0;overflow:hidden;pointer-events:none;}
+
+.dz-icon{font-size:28px;margin-bottom:6px;display:block;}
+.dz-title{font-size:12px;font-weight:700;color:var(--h2);margin-bottom:3px;}
+.dz-sub{font-size:9.5px;color:var(--dm);}
+.dz-formats{margin-top:8px;display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
+.dz-fmt{
+  font-size:8px;font-family:var(--mono);
+  background:var(--s2);border:1px solid var(--bdr);
+  border-radius:4px;padding:1px 6px;color:var(--dm);
+}
+
+/* 갤러리 */
+#img-gallery{margin-top:10px;}
+.gal-header{display:flex;align-items:center;gap:8px;padding:6px 2px;margin-bottom:8px;border-bottom:1px solid var(--bdr);}
+.gal-count{font-size:11px;font-weight:700;color:var(--h2);background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:2px 10px;font-family:var(--mono);}
+.gal-hint{font-size:9px;color:var(--dm);flex:1;}
+.gal-clear-all{padding:4px 10px;border-radius:5px;border:1px solid var(--bdr);font-size:9.5px;font-weight:600;color:var(--rd);background:var(--white);cursor:pointer;font-family:var(--sans);transition:all .2s;}
+.gal-clear-all:hover{background:var(--rdb);border-color:var(--rd);}
+.gal-list{display:flex;flex-wrap:wrap;gap:8px;max-height:160px;overflow-y:auto;padding:2px;}
+.gal-item{position:relative;width:80px;flex-shrink:0;border-radius:7px;overflow:hidden;border:2px solid var(--bdr);cursor:pointer;transition:all .2s;background:var(--s1);}
+.gal-item:hover{border-color:var(--h3);transform:translateY(-1px);box-shadow:0 3px 8px rgba(37,99,235,.2);}
+.gal-item.selected{border-color:var(--h3);box-shadow:0 0 0 2px rgba(37,99,235,.3);}
+.gal-item.selected::after{content:'✓';position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:var(--h3);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.gal-thumb{width:100%;height:56px;object-fit:cover;display:block;}
+.gal-name{font-size:7.5px;color:var(--dm);padding:3px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--white);line-height:1.3;}
+.gal-del{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:rgba(153,27,27,.8);color:#fff;font-size:9px;line-height:14px;text-align:center;cursor:pointer;display:none;font-weight:700;}
+.gal-item:hover .gal-del{display:block;}
+
+/* 이미지 결과 패널 — 기본 숨김 */
+#img-result{display:none;margin-top:12px;}
+#img-result.show{display:block;}
+
+.ir-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+@media(min-width:600px){.ir-grid{grid-template-columns:200px 1fr;}}
+#img-preview-wrap{
+  border-radius:8px;overflow:hidden;
+  border:1.5px solid var(--bdr);background:var(--s1);
+  aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+}
+#img-preview{width:100%;height:100%;object-fit:contain;display:none;}
+.ir-info{display:flex;flex-direction:column;gap:5px;}
+.ir-title{font-size:11px;font-weight:700;color:var(--h2);margin-bottom:2px;}
+.ir-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:3.5px 0;border-bottom:1px solid var(--bdr2);font-size:10.5px;
+}
+.ir-row:last-child{border-bottom:none;}
+.ir-label{color:var(--dm);font-size:9.5px;font-weight:500;}
+.ir-value{font-weight:700;font-family:var(--mono);color:var(--h3);font-size:10.5px;}
+.ir-actions{display:flex;gap:8px;margin-top:8px;}
+.btn-apply{
+  flex:1;padding:8px;border-radius:6px;border:none;cursor:pointer;
+  font-size:11px;font-weight:700;font-family:var(--sans);
+  background:linear-gradient(135deg,var(--h2),var(--h3));
+  color:#fff;box-shadow:0 2px 6px rgba(37,99,235,.25);transition:all .2s;
+}
+.btn-apply:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(37,99,235,.3);}
+.btn-clear{
+  padding:8px 14px;border-radius:6px;border:1.5px solid var(--bdr);
+  cursor:pointer;font-size:11px;font-weight:700;font-family:var(--sans);
+  background:var(--white);color:var(--dm);transition:all .2s;
+}
+.btn-clear:hover{border-color:var(--rd);color:var(--rd);}
+
+/* API Key 입력 */
+.ak-wrap{background:var(--s2);border:1px solid var(--bdr);border-radius:6px;padding:7px 9px;margin-top:6px;}
+.ak-label{font-size:9px;font-weight:700;color:var(--h2);margin-bottom:4px;}
+.ak-note{font-size:8px;color:var(--dm);font-weight:400;}
+.ak-row{display:flex;gap:5px;}
+#api-key-input{flex:1;padding:5px 8px;border:1.5px solid var(--bdr);border-radius:4px;font-size:10px;font-family:var(--mono);color:var(--tx);background:var(--white);outline:none;transition:border-color .2s;}
+#api-key-input:focus{border-color:var(--h3);}
+#api-key-input::placeholder{color:var(--dm2);}
+#ak-toggle{padding:5px 9px;border:1.5px solid var(--bdr);border-radius:4px;font-size:9px;font-weight:600;color:var(--dm);background:var(--white);cursor:pointer;white-space:nowrap;font-family:var(--sans);transition:all .2s;}
+#ak-toggle:hover{border-color:var(--h3);color:var(--h3);}
+
+/* AI 분석 버튼 */
+.btn-analyze{width:100%;padding:9px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--sans);background:linear-gradient(135deg,#065f46,#059669);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,.3);transition:all .2s;}
+.btn-analyze:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(5,150,105,.38);}
+.btn-analyze:disabled{background:#9db4cc;box-shadow:none;cursor:not-allowed;transform:none;}
+
+/* 로딩 오버레이 */
+#ai-loading{display:none;position:fixed;inset:0;background:rgba(10,37,64,.65);backdrop-filter:blur(5px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#ai-loading.show{display:flex;}
+.ai-spinner{width:44px;height:44px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:#60a5fa;animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-load-title{color:#fff;font-size:14px;font-weight:700;font-family:var(--sans);}
+.ai-load-step{color:#93c5fd;font-size:10px;font-family:var(--mono);min-height:14px;}
+
+/* 검증 리포트 */
+#val-report{display:none;margin:10px 0 0;padding:10px 12px;border-radius:7px;font-size:10px;line-height:1.7;}
+#val-report.ok{background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;}
+#val-report.warn{background:#fef3c7;border:1px solid #fcd34d;color:#78350f;}
+#val-report.show{display:block;}
+.vr-title{font-weight:700;font-size:11px;margin-bottom:4px;}
+.vr-line{display:block;font-size:9.5px;}
+
+/* 완료 토스트 */
+#ai-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gn);color:#fff;padding:10px 24px;border-radius:8px;font-size:12px;font-weight:600;font-family:var(--sans);box-shadow:0 4px 18px rgba(0,0,0,.22);display:none;z-index:1000;white-space:nowrap;}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+#img-overlay{width:100%;display:none;position:relative;background:var(--white);box-shadow:var(--sh2);}
+#img-overlay.show{display:block;}
+#overlay-img{width:100%;display:block;max-height:500px;object-fit:contain;}
+.overlay-label{
+  position:absolute;top:8px;left:8px;
+  background:rgba(30,58,95,.85);backdrop-filter:blur(4px);
+  border:1px solid rgba(147,197,253,.3);border-radius:6px;
+  padding:4px 10px;font-size:8.5px;color:#93c5fd;font-family:var(--mono);
+}
+.overlay-close{
+  position:absolute;top:8px;right:8px;
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(30,58,95,.85);border:1px solid rgba(147,197,253,.3);
+  display:flex;align-items:center;justify-content:center;
+  color:#93c5fd;font-size:14px;cursor:pointer;transition:all .2s;
+}
+.overlay-close:hover{background:rgba(220,38,38,.8);color:#fff;}
+
+/* ══════════════════════════════
+   단선도 영역
+══════════════════════════════ */
+#dw{width:100%;background:var(--white);box-shadow:var(--sh2);}
+#dw svg{width:100%;display:block;}
+
+/* ══════════════════════════════
+   데이터 섹션 (아래로 스크롤)
+══════════════════════════════ */
+#body{max-width:900px;margin:0 auto;padding:0 0 40px;}
+
+/* 섹션 헤더 */
+.sh{
+  background:linear-gradient(135deg,var(--h2),var(--h3));
+  padding:10px 16px;display:flex;align-items:center;gap:10px;
+}
+.sh .sbar{width:3px;height:16px;background:#93c5fd;border-radius:2px;flex-shrink:0;}
+.sh .stitle{font-size:11px;font-weight:700;color:#fff;letter-spacing:.8px;}
+.sh .stag{
+  margin-left:auto;font-size:8.5px;font-family:var(--mono);
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;padding:2px 9px;color:#bfdbfe;
+}
+.sh.solar{background:linear-gradient(135deg,#78350f,#b45309,#d97706);}
+.sh.solar .sbar{background:#fde68a;}
+.sh.solar .stag{color:#fde68a;}
+
+/* 카드 */
+.cd{background:var(--white);border-bottom:1px solid var(--bdr2);padding:11px 16px;}
+.cd:nth-child(even){background:var(--s1);}
+.sub{
+  font-size:9px;font-weight:700;color:var(--h3);
+  letter-spacing:.9px;text-transform:uppercase;
+  margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--bdr);
+}
+
+/* 데이터 행 */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:4.5px 0;border-bottom:1px solid var(--bdr2);}
+.dr:last-child{border-bottom:none;}
+.dl{color:var(--dm);font-size:10px;font-weight:500;}
+.dv{font-size:11.5px;font-weight:700;font-family:var(--mono);}
+.dv.a{color:var(--h3)}
+.dv.g{color:var(--gn2)}
+.dv.y{color:#ca8a04}
+.dv.r{color:var(--rd)}
+.dv.n{color:var(--tx2)}
+
+/* 상태 행 */
+.sr{display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:5px;font-size:10px;font-weight:600;margin-bottom:4px;}
+.sr:last-child{margin-bottom:0;}
+.sr.ok{background:var(--gnb);color:var(--gn);}
+.sr.err{background:var(--rdb);color:var(--rd);}
+.sr.warn{background:var(--ylb);color:var(--yl);}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sr.ok .sdot{background:var(--gn2);}
+.sr.err .sdot{background:var(--rd);animation:bk 1.2s infinite;}
+.sr.warn .sdot{background:#d97706;}
+
+/* 부하 카드 */
+.lc{background:var(--white);border-bottom:1px solid var(--bdr2);padding:11px 16px;}
+.lc:nth-child(even){background:var(--s1);}
+.lh{display:flex;align-items:center;gap:7px;margin-bottom:2px;}
+.lname{font-size:12px;font-weight:700;color:var(--h2);}
+.bdg{font-size:8.5px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.bdg.g{background:var(--gnb);color:var(--gn);border:1px solid #6ee7b7;}
+.bdg.y{background:var(--ylb);color:var(--yl);border:1px solid #fcd34d;}
+.bdg.r{background:var(--rdb);color:var(--rd);border:1px solid #fca5a5;}
+.lsub{font-size:9px;color:var(--dm);margin-bottom:8px;}
+
+/* 3상 테이블 */
+.pt{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:11px;border-radius:5px;overflow:hidden;box-shadow:var(--sh);}
+.pt th{background:var(--h2);color:#fff;font-size:9px;padding:5px 4px;text-align:center;font-weight:700;letter-spacing:.4px;}
+.pt td{padding:5px;border:1px solid var(--bdr2);text-align:center;font-family:var(--mono);background:var(--white);}
+.pt tr:nth-child(even) td{background:var(--s1);}
+.pt td:first-child{text-align:left;font-family:var(--sans);font-size:9.5px;color:var(--tx3);font-weight:600;padding-left:7px;background:var(--s2);}
+.pt .pv{color:var(--tx);font-weight:700;}
+.pt .pv.hi{color:var(--gn2);}
+.pt .pv.lo{color:var(--dm2);}
+
+/* 메트릭 그리드 */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+@media(min-width:600px){.mg{grid-template-columns:repeat(4,1fr);}}
+.mb{background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;padding:7px 9px;box-shadow:var(--sh);}
+.mlb{font-size:8.5px;color:var(--dm);margin-bottom:2px;font-weight:500;}
+.mv{font-size:13px;font-weight:700;font-family:var(--mono);}
+.mv.g{color:var(--gn2)}
+.mv.y{color:#ca8a04}
+.mv.a{color:var(--h3)}
+.mv.r{color:var(--rd)}
+
+/* 구분선 */
+.dvd{height:6px;background:var(--s2);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);}
+
+/* ══════════════════════════════
+   SVG 애니메이션
+══════════════════════════════ */
+@keyframes hfl{to{stroke-dashoffset:-36}}
+@keyframes lfl{to{stroke-dashoffset:-36}}
+@keyframes sp{0%,100%{filter:drop-shadow(0 0 2px #ca8a04)}50%{filter:drop-shadow(0 0 7px #d97706)}}
+@keyframes ub{0%,100%{opacity:1}50%{opacity:.45}}
+.hf{stroke-dasharray:5 7;animation:hfl 1.1s linear infinite;}
+.lf{stroke-dasharray:5 7;animation:lfl 2s linear infinite;}
+.sg{animation:sp 2.5s ease-in-out infinite;}
+.ubl{animation:ub 1.5s ease-in-out infinite;}
+/* ── NAV 2행 구조 ── */
+nav{
+  background:linear-gradient(135deg,var(--h1) 0%,var(--h2) 55%,var(--h3) 100%);
+  box-shadow:0 3px 14px rgba(10,37,64,.3);
+  position:sticky;top:0;z-index:100;
+  flex-direction:column;padding:0;
+}
+nav::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 48px,rgba(255,255,255,.02) 48px,rgba(255,255,255,.02) 49px);pointer-events:none;}
+.nav-top{display:flex;align-items:center;padding:10px 20px;gap:14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.nb{width:3px;height:28px;background:linear-gradient(180deg,#93c5fd,#3b82f6);border-radius:2px;flex-shrink:0;}
+.nt-wrap{display:flex;flex-direction:column;}
+.nt{font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px;}
+.ns{font-size:8px;color:#93c5fd;letter-spacing:1.8px;margin-top:2px;}
+.nav-pills{display:flex;gap:6px;margin-left:auto;align-items:center;}
+.nav-pill{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:4px 11px;font-size:9px;color:#bfdbfe;font-weight:600;}
+.nav-pill .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot.ok{background:#4ade80;box-shadow:0 0 5px #4ade80;animation:bk 2s infinite;}
+.dot.warn{background:#fbbf24;box-shadow:0 0 5px #fbbf24;animation:bk 1.2s infinite;}
+.dot.err{background:#f87171;box-shadow:0 0 5px #f87171;animation:bk .8s infinite;}
+.nav-clk{font-family:var(--mono);font-size:10.5px;color:#93c5fd;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:4px 10px;white-space:nowrap;}
+.nav-bottom{display:flex;align-items:stretch;background:rgba(0,0,0,.18);}
+.nav-link{display:flex;align-items:center;gap:6px;padding:9px 18px;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.65);text-decoration:none;transition:all .2s;border-right:1px solid rgba(255,255,255,.06);position:relative;white-space:nowrap;}
+.nav-link .nl-icon{font-size:13px;}
+.nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-link.active{background:rgba(255,255,255,.12);color:#fff;font-weight:700;}
+.nav-link.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,#60a5fa,#3b82f6);border-radius:2px 2px 0 0;}
+.nav-spacer{flex:1;}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.3}}
+@media(max-width:640px){.ns{display:none;}.nav-pill{display:none;}.nav-clk{font-size:9px;padding:3px 7px;}.nav-link .nl-icon{display:none;}.nav-link{padding:7px 10px;font-size:10.5px;flex:1;justify-content:center;}.nav-bottom{flex-wrap:nowrap;}.nav-spacer{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     HEADER
+══════════════════════════════ -->
+<div id="hdr">
+  <div class="hbar"></div>
+  <div>
+    <div class="ht">흥해터널</div>
+    <div class="hs">POWER SINGLE-LINE DIAGRAM · SCADA</div>
+  </div>
+  <div class="hright">
+    <div class="hpill"><div class="dot ok"></div>KEPCO 정상</div>
+    <div class="hpill"><div class="dot warn"></div>UPS BYPASS</div>
+    <div class="hclk" id="clk"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     이미지 업로드 툴바
+══════════════════════════════ -->
+<div id="img-toolbar">
+  <div id="img-topbar">
+    <div class="tb-icon">📷</div>
+    <div class="tb-label">
+      <div class="tb-title">SCADA 이미지 업로드</div>
+      <div class="tb-sub">화면 캡처 이미지를 업로드하여 단선도 위에 표시</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-badge" id="tb-status">이미지 없음</div>
+      <div class="tb-toggle">▼</div>
+    </div>
+  </div>
+  <div id="img-panel">
+
+    <!-- 드롭존 (multiple 지원) -->
+    <label id="drop-zone" for="file-input">
+      <input type="file" id="file-input" accept="image/*" multiple>
+      <span class="dz-icon" id="dz-icon">🖼</span>
+      <div class="dz-title" id="dz-title">클릭 또는 이미지를 여기에 드래그</div>
+      <div class="dz-sub" id="dz-sub">여러 장 동시 선택 가능 · SCADA 화면 캡처 · 계측기 사진</div>
+      <div class="dz-formats">
+        <span class="dz-fmt">JPG</span>
+        <span class="dz-fmt">PNG</span>
+        <span class="dz-fmt">WEBP</span>
+        <span class="dz-fmt">GIF</span>
+        <span class="dz-fmt">BMP</span>
+      </div>
+    </label>
+
+    <!-- 이미지 목록 갤러리 -->
+    <div id="img-gallery" style="display:none;">
+      <div class="gal-header">
+        <span class="gal-count" id="gal-count">0장</span>
+        <span class="gal-hint">썸네일 클릭 → 선택 · 표시</span>
+        <button type="button" class="gal-clear-all" id="gal-clear-all">전체 삭제</button>
+      </div>
+      <div class="gal-list" id="gal-list"></div>
+    </div>
+
+    <!-- 선택된 이미지 상세 -->
+    <div id="img-result">
+      <div class="ir-grid">
+        <div id="img-preview-wrap">
+          <img id="img-preview" src="" alt="미리보기">
+        </div>
+        <div class="ir-info">
+          <div class="ir-title">선택된 이미지</div>
+          <div class="ir-row"><span class="ir-label">파일명</span><span class="ir-value" id="ir-name">—</span></div>
+          <div class="ir-row"><span class="ir-label">파일 크기</span><span class="ir-value" id="ir-size">—</span></div>
+          <div class="ir-row"><span class="ir-label">해상도</span><span class="ir-value" id="ir-res">—</span></div>
+          <div class="ir-row"><span class="ir-label">형식</span><span class="ir-value" id="ir-type">—</span></div>
+          <div class="ir-row"><span class="ir-label">업로드 시각</span><span class="ir-value" id="ir-time">—</span></div>
+          <!-- API Key 입력 -->
+          <div class="ak-wrap">
+            <div class="ak-label">Anthropic API Key <span class="ak-note">· 로컬 전용 · 저장 안됨</span></div>
+            <div class="ak-row">
+              <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+              <button type="button" id="ak-toggle">표시</button>
+            </div>
+          </div>
+          <div class="ir-actions">
+            <button type="button" class="btn-analyze" id="btn-analyze">🤖 AI 데이터 분석 · 자동 입력</button>
+          </div>
+          <div class="ir-actions" style="margin-top:5px;">
+            <button type="button" class="btn-apply" id="btn-apply">단선도 위에 표시</button>
+            <button type="button" class="btn-clear" id="btn-clear">선택 삭제</button>
+          </div>
+          <div id="val-report"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AI 로딩 오버레이 -->
+<div id="ai-loading">
+  <div class="ai-spinner"></div>
+  <div class="ai-load-title">AI가 이미지를 분석 중입니다...</div>
+  <div class="ai-load-step" id="ai-step">SCADA 데이터 인식 중</div>
+</div>
+
+<!-- 완료 토스트 -->
+<div id="ai-toast"></div>
+
+<!-- 이미지 오버레이 -->
+<div id="img-overlay">
+  <span class="overlay-label">📷 SCADA IMAGE · 업로드된 이미지</span>
+  <div class="overlay-close" id="overlay-close">✕</div>
+  <img id="overlay-img" src="" alt="SCADA 이미지">
+</div>
+
+
+
+<!-- ══════════════════════════════
+     데이터 섹션 (위→아래 스크롤)
+══════════════════════════════ -->
+<div id="body">
+
+<!-- 흥해터널 -->
+<div class="sh">
+  <div class="sbar"></div>
+  <span class="stitle">흥해터널</span>
+  <div class="stag">SINGLE LINE DIAGRAM</div>
+</div>
+
+<!-- ══════════════════════════════
+     단선도 SVG
+══════════════════════════════ -->
+<div id="dw">
+<svg viewBox="0 0 920 560" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="hbg" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#bfdbfe"/>
+    <stop offset="35%" stop-color="#2563eb"/>
+    <stop offset="100%" stop-color="#bfdbfe"/>
+  </linearGradient>
+  <linearGradient id="lbg" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#fde68a"/>
+    <stop offset="35%" stop-color="#ca8a04"/>
+    <stop offset="100%" stop-color="#fde68a"/>
+  </linearGradient>
+  <filter id="sh">
+    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#0a2540" flood-opacity=".09"/>
+  </filter>
+</defs>
+<rect width="920" height="560" fill="#f8fbff"/>
+<!-- 그리드 보조선 -->
+<line x1="0" y1="108" x2="920" y2="108" stroke="#dde8fb" stroke-width=".8"/>
+<line x1="0" y1="215" x2="920" y2="215" stroke="#dde8fb" stroke-width=".8"/>
+<line x1="0" y1="305" x2="920" y2="305" stroke="#dde8fb" stroke-width=".8"/>
+<line x1="0" y1="380" x2="920" y2="380" stroke="#dde8fb" stroke-width=".8"/>
+
+<!-- KEPCO 수전 -->
+<rect x="12" y="8" width="140" height="52" rx="5" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5" filter="url(#sh)"/>
+<text x="82" y="23" text-anchor="middle" fill="#1e3a5f" font-size="8.5" font-weight="700" font-family="'Noto Sans KR'">FROM : KEPCO</text>
+<text x="82" y="34" text-anchor="middle" fill="#334155" font-size="7.5" font-family="'Noto Sans KR'">3Ø4W 22.9kV-Y</text>
+<text x="82" y="44" text-anchor="middle" fill="#334155" font-size="7" font-family="'Noto Sans KR'">CNCV-W 60㎟ / 1Cx3</text>
+<text x="82" y="54" text-anchor="middle" fill="#6b8ab0" font-size="6.5" font-family="'Noto Sans KR'">ELP1250 · 2LINE · 예비1</text>
+<line x1="82" y1="60" x2="82" y2="76" stroke="#2563eb" stroke-width="2.5"/>
+<polygon points="77,73 87,73 82,80" fill="#2563eb"/>
+
+<!-- LBS -->
+<rect x="54" y="79" width="56" height="26" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.3" filter="url(#sh)"/>
+<text x="82" y="91" text-anchor="middle" fill="#1e3a5f" font-size="8" font-weight="700" font-family="'Noto Sans KR'">LBS</text>
+<text x="82" y="101" text-anchor="middle" fill="#6b8ab0" font-size="7" font-family="'JetBrains Mono'">25.8kV 630A</text>
+<line x1="82" y1="105" x2="82" y2="114" stroke="#2563eb" stroke-width="2.5"/>
+
+<!-- 태양광 #1 -->
+<g class="sg">
+  <rect x="210" y="67" width="42" height="42" rx="4" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="231" y="83" text-anchor="middle" fill="#ca8a04" font-size="14">☀</text>
+  <text x="231" y="94" text-anchor="middle" fill="#78350f" font-size="7" font-weight="700" font-family="'Noto Sans KR'">태양광 #1</text>
+  <text x="231" y="104" text-anchor="middle" fill="#6b8ab0" font-size="6.5" font-family="'JetBrains Mono'">29.7KW</text>
+  <line x1="231" y1="109" x2="231" y2="114" stroke="#ca8a04" stroke-width="1.5"/>
+</g>
+<!-- 태양광 #2 -->
+<g class="sg">
+  <rect x="648" y="67" width="42" height="42" rx="4" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="669" y="83" text-anchor="middle" fill="#ca8a04" font-size="14">☀</text>
+  <text x="669" y="94" text-anchor="middle" fill="#78350f" font-size="7" font-weight="700" font-family="'Noto Sans KR'">태양광 #2</text>
+  <text x="669" y="104" text-anchor="middle" fill="#6b8ab0" font-size="6.5" font-family="'JetBrains Mono'">9.5KW</text>
+  <line x1="669" y1="109" x2="669" y2="114" stroke="#ca8a04" stroke-width="1.5"/>
+</g>
+
+<!-- 22.9kV HV BUS -->
+<rect x="12" y="114" width="730" height="9" rx="3" fill="url(#hbg)" filter="url(#sh)"/>
+<line x1="12" y1="118" x2="742" y2="118" stroke="rgba(255,255,255,.55)" stroke-width="1.5" class="hf"/>
+<text x="375" y="111" text-anchor="middle" fill="#1e40af" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'" letter-spacing=".5">22.9kV HV BUS</text>
+
+<!-- COL1 x=82: HV-104 → LTR-101 → LV-101 -->
+<line x1="82" y1="123" x2="82" y2="136" stroke="#2563eb" stroke-width="2.2"/>
+<rect x="64" y="136" width="36" height="23" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="1.4" filter="url(#sh)"/>
+<text x="82" y="147" text-anchor="middle" fill="#1e3a5f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">VCB</text>
+<text x="82" y="155" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">HV-104 · ID01</text>
+<!-- HV-104 데이터 패널 -->
+<rect x="104" y="128" width="100" height="68" rx="3" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.2" filter="url(#sh)"/>
+<text x="154" y="139" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">HV-104 계측</text>
+<line x1="107" y1="142" x2="201" y2="142" stroke="#bfdbfe" stroke-width=".8"/>
+<text x="109" y="151" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">R-S</text><text x="122" y="151" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,952V / 2.2A</text>
+<text x="109" y="161" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">S-T</text><text x="122" y="161" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,927V / 2.3A</text>
+<text x="109" y="171" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">T-R</text><text x="122" y="171" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">23,014V / 2.2A</text>
+<text x="109" y="181" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력</text><text x="122" y="181" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">87.4KW  0.99PF</text>
+<text x="109" y="191" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력량</text><text x="124" y="191" fill="#059669" font-size="6" font-weight="700" font-family="'JetBrains Mono'">300.98MWh</text>
+<line x1="82" y1="159" x2="82" y2="172" stroke="#2563eb" stroke-width="2.2"/>
+<circle cx="82" cy="180" r="11" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8" filter="url(#sh)"/>
+<circle cx="82" cy="195" r="11" fill="#fefce8" stroke="#ca8a04" stroke-width="1.8" filter="url(#sh)"/>
+<text x="82" y="184" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">HV</text>
+<text x="82" y="199" text-anchor="middle" fill="#92400e" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">LV</text>
+<text x="82" y="213" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">LTR-101 200KVA</text>
+<line x1="82" y1="206" x2="82" y2="220" stroke="#ca8a04" stroke-width="2.2"/>
+<rect x="64" y="220" width="36" height="23" rx="3" fill="#fefce8" stroke="#ca8a04" stroke-width="1.4" filter="url(#sh)"/>
+<line x1="64" y1="226" x2="100" y2="238" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="82" y="231" text-anchor="middle" fill="#78350f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">ACB</text>
+<text x="82" y="239" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">LV-101 · ID05</text>
+<!-- LV-101 데이터 패널 -->
+<rect x="104" y="216" width="100" height="64" rx="3" fill="#fefce8" stroke="#fde68a" stroke-width="1.2" filter="url(#sh)"/>
+<text x="154" y="227" text-anchor="middle" fill="#78350f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">LV-101 계측</text>
+<line x1="107" y1="230" x2="201" y2="230" stroke="#fde68a" stroke-width=".8"/>
+<text x="109" y="239" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">R상</text><text x="120" y="239" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">381V / 88.4A</text>
+<text x="109" y="249" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">S상</text><text x="120" y="249" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">381V / 94.7A</text>
+<text x="109" y="259" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">T상</text><text x="120" y="259" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">381V / 93.0A</text>
+<text x="109" y="269" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력</text><text x="122" y="269" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">59.7KW  0.98PF</text>
+<text x="109" y="279" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력량</text><text x="124" y="279" fill="#059669" font-size="6" font-weight="700" font-family="'JetBrains Mono'">201.90MWh</text>
+<line x1="82" y1="243" x2="82" y2="288" stroke="#ca8a04" stroke-width="2.2"/>
+
+<!-- COL2 x=272: HV-105 → PTR-101A → LV-105 -->
+<line x1="272" y1="123" x2="272" y2="136" stroke="#2563eb" stroke-width="2.2"/>
+<rect x="254" y="136" width="36" height="23" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="1.4" filter="url(#sh)"/>
+<text x="272" y="147" text-anchor="middle" fill="#1e3a5f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">VCB</text>
+<text x="272" y="155" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">HV-105 · ID02</text>
+<!-- HV-105 데이터 패널 -->
+<rect x="294" y="128" width="100" height="68" rx="3" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.2" filter="url(#sh)"/>
+<text x="344" y="139" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">HV-105 계측</text>
+<line x1="297" y1="142" x2="391" y2="142" stroke="#bfdbfe" stroke-width=".8"/>
+<text x="299" y="151" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">R-S</text><text x="312" y="151" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,940V / 1.5A</text>
+<text x="299" y="161" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">S-T</text><text x="312" y="161" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,929V / 1.5A</text>
+<text x="299" y="171" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">T-R</text><text x="312" y="171" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">23,021V / 1.6A</text>
+<text x="299" y="181" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력</text><text x="312" y="181" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">60.9KW  0.99PF</text>
+<text x="299" y="191" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력량</text><text x="314" y="191" fill="#059669" font-size="6" font-weight="700" font-family="'JetBrains Mono'">206.31MWh</text>
+<line x1="272" y1="159" x2="272" y2="172" stroke="#2563eb" stroke-width="2.2"/>
+<circle cx="272" cy="180" r="11" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8" filter="url(#sh)"/>
+<circle cx="272" cy="195" r="11" fill="#fefce8" stroke="#ca8a04" stroke-width="1.8" filter="url(#sh)"/>
+<text x="272" y="184" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">HV</text>
+<text x="272" y="199" text-anchor="middle" fill="#92400e" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">LV</text>
+<text x="272" y="213" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">PTR-101A 200KVA</text>
+<line x1="272" y1="206" x2="272" y2="220" stroke="#ca8a04" stroke-width="2.2"/>
+<rect x="254" y="220" width="36" height="23" rx="3" fill="#fefce8" stroke="#ca8a04" stroke-width="1.4" filter="url(#sh)"/>
+<line x1="254" y1="226" x2="290" y2="238" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="272" y="231" text-anchor="middle" fill="#78350f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">ACB</text>
+<text x="272" y="239" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">LV-105 · ID06</text>
+<!-- LV-105 데이터 패널 -->
+<rect x="294" y="216" width="100" height="64" rx="3" fill="#fefce8" stroke="#fde68a" stroke-width="1.2" filter="url(#sh)"/>
+<text x="344" y="227" text-anchor="middle" fill="#78350f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">LV-105 계측</text>
+<line x1="297" y1="230" x2="391" y2="230" stroke="#fde68a" stroke-width=".8"/>
+<text x="299" y="239" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">R상</text><text x="310" y="239" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">381V / 47.0A</text>
+<text x="299" y="249" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">S상</text><text x="310" y="249" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">381V / 38.1A</text>
+<text x="299" y="259" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">T상</text><text x="310" y="259" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">382V / 31.4A</text>
+<text x="299" y="269" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력</text><text x="312" y="269" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">25.2KW  0.99PF</text>
+<text x="299" y="279" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력량</text><text x="314" y="279" fill="#059669" font-size="6" font-weight="700" font-family="'JetBrains Mono'">84.99MWh</text>
+<line x1="272" y1="243" x2="272" y2="288" stroke="#ca8a04" stroke-width="2.2"/>
+
+<!-- COL3 x=460: HV-106 → PTR-101B → LV-동명 -->
+<line x1="460" y1="123" x2="460" y2="136" stroke="#2563eb" stroke-width="2.2"/>
+<rect x="442" y="136" width="36" height="23" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="1.4" filter="url(#sh)"/>
+<text x="460" y="147" text-anchor="middle" fill="#1e3a5f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">VCB</text>
+<text x="460" y="155" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">HV-106 · ID03</text>
+<!-- HV-106 데이터 패널 -->
+<rect x="482" y="128" width="100" height="68" rx="3" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.2" filter="url(#sh)"/>
+<text x="532" y="139" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">HV-106 계측</text>
+<line x1="485" y1="142" x2="579" y2="142" stroke="#bfdbfe" stroke-width=".8"/>
+<text x="487" y="151" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">R-S</text><text x="500" y="151" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,959V / 0.7A</text>
+<text x="487" y="161" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">S-T</text><text x="500" y="161" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,959V / 0.7A</text>
+<text x="487" y="171" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">T-R</text><text x="500" y="171" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">23,022V / 0.6A</text>
+<text x="487" y="181" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력</text><text x="500" y="181" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">25.9KW  0.99PF</text>
+<text x="487" y="191" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력량</text><text x="502" y="191" fill="#059669" font-size="6" font-weight="700" font-family="'JetBrains Mono'">87.25MWh</text>
+<line x1="460" y1="159" x2="460" y2="172" stroke="#2563eb" stroke-width="2.2"/>
+<circle cx="460" cy="180" r="11" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8" filter="url(#sh)"/>
+<circle cx="460" cy="195" r="11" fill="#fefce8" stroke="#ca8a04" stroke-width="1.8" filter="url(#sh)"/>
+<text x="460" y="184" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">HV</text>
+<text x="460" y="199" text-anchor="middle" fill="#92400e" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">LV</text>
+<text x="460" y="213" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">PTR-101B 200KVA</text>
+<line x1="460" y1="206" x2="460" y2="220" stroke="#ca8a04" stroke-width="2.2"/>
+<rect x="442" y="220" width="36" height="23" rx="3" fill="#fefce8" stroke="#ca8a04" stroke-width="1.4" filter="url(#sh)"/>
+<line x1="442" y1="226" x2="478" y2="238" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="460" y="231" text-anchor="middle" fill="#78350f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">ACB</text>
+<text x="460" y="239" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">LV-동명</text>
+<!-- LV-동명 데이터 패널 -->
+<rect x="482" y="216" width="100" height="52" rx="3" fill="#fefce8" stroke="#fde68a" stroke-width="1.2" filter="url(#sh)"/>
+<text x="532" y="227" text-anchor="middle" fill="#78350f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">LV-동명 계측</text>
+<line x1="485" y1="230" x2="579" y2="230" stroke="#fde68a" stroke-width=".8"/>
+<text x="487" y="239" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">공급처</text><text x="505" y="239" fill="#ca8a04" font-size="6" font-weight="700" font-family="'Noto Sans KR'">동명동 조명등</text>
+<text x="487" y="249" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">변압기</text><text x="505" y="249" fill="#1d6fcf" font-size="6" font-weight="700" font-family="'JetBrains Mono'">PTR-101B 2차</text>
+<text x="487" y="259" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">계통</text><text x="505" y="259" fill="#ca8a04" font-size="6" font-weight="700" font-family="'JetBrains Mono'">380V LV</text>
+<line x1="460" y1="243" x2="460" y2="288" stroke="#ca8a04" stroke-width="2.2"/>
+
+<!-- COL4 x=648: HV-107 → PTR-102 → LV-108 -->
+<line x1="648" y1="123" x2="648" y2="136" stroke="#2563eb" stroke-width="2.2"/>
+<rect x="630" y="136" width="36" height="23" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="1.4" filter="url(#sh)"/>
+<text x="648" y="147" text-anchor="middle" fill="#1e3a5f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">VCB</text>
+<text x="648" y="155" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">HV-107 · ID04</text>
+<!-- HV-107 데이터 패널 -->
+<rect x="670" y="128" width="100" height="68" rx="3" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.2" filter="url(#sh)"/>
+<text x="720" y="139" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">HV-107 계측</text>
+<line x1="673" y1="142" x2="767" y2="142" stroke="#bfdbfe" stroke-width=".8"/>
+<text x="675" y="151" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">R-S</text><text x="688" y="151" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,949V / 0.0A</text>
+<text x="675" y="161" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">S-T</text><text x="688" y="161" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">22,927V / 0.0A</text>
+<text x="675" y="171" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">T-R</text><text x="688" y="171" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">23,027V / 0.0A</text>
+<text x="675" y="181" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력</text><text x="688" y="181" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">0.0KW  —PF</text>
+<text x="675" y="191" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전력량</text><text x="690" y="191" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">4.67MWh</text>
+<line x1="648" y1="159" x2="648" y2="172" stroke="#2563eb" stroke-width="2.2"/>
+<circle cx="648" cy="180" r="11" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8" filter="url(#sh)"/>
+<circle cx="648" cy="195" r="11" fill="#fefce8" stroke="#ca8a04" stroke-width="1.8" filter="url(#sh)"/>
+<text x="648" y="184" text-anchor="middle" fill="#1e3a5f" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">HV</text>
+<text x="648" y="199" text-anchor="middle" fill="#92400e" font-size="6.5" font-weight="700" font-family="'JetBrains Mono'">LV</text>
+<text x="648" y="213" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">PTR-102 400KVA</text>
+<line x1="648" y1="206" x2="648" y2="220" stroke="#ca8a04" stroke-width="2.2"/>
+<rect x="630" y="220" width="36" height="23" rx="3" fill="#fefce8" stroke="#ca8a04" stroke-width="1.4" filter="url(#sh)"/>
+<line x1="630" y1="226" x2="666" y2="238" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="648" y="231" text-anchor="middle" fill="#78350f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">ACB</text>
+<text x="648" y="239" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">LV-108 · ID07</text>
+<!-- LV-108 데이터 패널 -->
+<rect x="670" y="216" width="100" height="52" rx="3" fill="#fefce8" stroke="#fde68a" stroke-width="1.2" filter="url(#sh)"/>
+<text x="720" y="227" text-anchor="middle" fill="#78350f" font-size="6.5" font-weight="700" font-family="'Noto Sans KR'">LV-108 계측</text>
+<line x1="673" y1="230" x2="767" y2="230" stroke="#fde68a" stroke-width=".8"/>
+<text x="675" y="239" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">공급처</text><text x="693" y="239" fill="#9db4cc" font-size="6" font-weight="700" font-family="'Noto Sans KR'">동력용 대기</text>
+<text x="675" y="249" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전압</text><text x="693" y="249" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">380V (무부하)</text>
+<text x="675" y="259" fill="#6b8ab0" font-size="5.8" font-family="'Noto Sans KR'">전류</text><text x="693" y="259" fill="#9db4cc" font-size="6" font-weight="700" font-family="'JetBrains Mono'">0.0A</text>
+<line x1="648" y1="243" x2="648" y2="288" stroke="#ca8a04" stroke-width="2.2"/>
+
+<!-- 380V LV BUS -->
+<rect x="12" y="288" width="700" height="8" rx="3" fill="url(#lbg)" filter="url(#sh)"/>
+<line x1="12" y1="292" x2="712" y2="292" stroke="rgba(255,255,255,.5)" stroke-width="1.5" class="lf"/>
+<text x="360" y="285" text-anchor="middle" fill="#92400e" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'" letter-spacing=".5">380V LV BUS</text>
+
+<!-- CTTS LV-102 -->
+<line x1="82" y1="296" x2="82" y2="315" stroke="#ca8a04" stroke-width="1.8"/>
+<rect x="62" y="315" width="40" height="22" rx="3" fill="#fff7ed" stroke="#c2410c" stroke-width="1.3" filter="url(#sh)"/>
+<text x="82" y="326" text-anchor="middle" fill="#7c2d12" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">CTTS</text>
+<text x="82" y="334" text-anchor="middle" fill="#c2410c" font-size="6.5" font-family="'Noto Sans KR'">LV-102</text>
+<line x1="82" y1="337" x2="82" y2="352" stroke="#c2410c" stroke-width="1.5"/>
+<text x="82" y="362" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">GCP-102A</text>
+<line x1="58" y1="352" x2="106" y2="352" stroke="#c2410c" stroke-width="1"/>
+<line x1="65" y1="352" x2="65" y2="372" stroke="#c2410c" stroke-width="1"/>
+<line x1="99" y1="352" x2="99" y2="372" stroke="#c2410c" stroke-width="1"/>
+<text x="54" y="384" text-anchor="middle" fill="#64748b" font-size="6" font-family="'Noto Sans KR'">D1-D1(영덕)</text>
+<text x="106" y="384" text-anchor="middle" fill="#64748b" font-size="6" font-family="'Noto Sans KR'">D1-D2(영덕)</text>
+
+<!-- CTTS LV-106 -->
+<line x1="272" y1="296" x2="272" y2="315" stroke="#ca8a04" stroke-width="1.8"/>
+<rect x="252" y="315" width="40" height="22" rx="3" fill="#fff7ed" stroke="#c2410c" stroke-width="1.3" filter="url(#sh)"/>
+<text x="272" y="326" text-anchor="middle" fill="#7c2d12" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">CTTS</text>
+<text x="272" y="334" text-anchor="middle" fill="#c2410c" font-size="6.5" font-family="'Noto Sans KR'">LV-106</text>
+<line x1="272" y1="337" x2="272" y2="352" stroke="#c2410c" stroke-width="1.5"/>
+<text x="272" y="362" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">GCP-102B</text>
+<line x1="248" y1="352" x2="296" y2="352" stroke="#c2410c" stroke-width="1"/>
+<line x1="256" y1="352" x2="256" y2="372" stroke="#c2410c" stroke-width="1"/>
+<line x1="288" y1="352" x2="288" y2="372" stroke="#c2410c" stroke-width="1"/>
+<text x="247" y="384" text-anchor="middle" fill="#64748b" font-size="6" font-family="'Noto Sans KR'">MN1(포항)</text>
+<text x="290" y="384" text-anchor="middle" fill="#64748b" font-size="6" font-family="'Noto Sans KR'">N1(포항)</text>
+
+<!-- ATS LV-109 -->
+<line x1="460" y1="296" x2="460" y2="315" stroke="#ca8a04" stroke-width="1.8"/>
+<rect x="440" y="315" width="40" height="22" rx="3" fill="#fff7ed" stroke="#c2410c" stroke-width="1.3" filter="url(#sh)"/>
+<text x="460" y="326" text-anchor="middle" fill="#7c2d12" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'">ATS</text>
+<text x="460" y="334" text-anchor="middle" fill="#c2410c" font-size="6.5" font-family="'Noto Sans KR'">LV-109</text>
+<line x1="460" y1="337" x2="460" y2="358" stroke="#c2410c" stroke-width="1.5"/>
+<text x="460" y="368" text-anchor="middle" fill="#6b8ab0" font-size="6" font-family="'Noto Sans KR'">GCP-102C</text>
+<text x="460" y="381" text-anchor="middle" fill="#334155" font-size="7" font-weight="600" font-family="'Noto Sans KR'">JETFAN (환기)</text>
+
+<!-- UPS-101 -->
+<g class="ubl">
+  <line x1="590" y1="296" x2="590" y2="313" stroke="#ca8a04" stroke-width="1.8"/>
+  <rect x="564" y="313" width="52" height="44" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" filter="url(#sh)"/>
+  <text x="590" y="329" text-anchor="middle" fill="#15803d" font-size="9" font-weight="700" font-family="'JetBrains Mono'">UPS</text>
+  <text x="590" y="340" text-anchor="middle" fill="#15803d" font-size="8" font-family="'JetBrains Mono'">101</text>
+  <rect x="569" y="343" width="42" height="11" rx="2" fill="#f97316"/>
+  <text x="590" y="351" text-anchor="middle" fill="#fff" font-size="7" font-weight="700" font-family="'JetBrains Mono'">BYPASS</text>
+  <line x1="590" y1="357" x2="590" y2="376" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="590" y="388" text-anchor="middle" fill="#6b8ab0" font-size="6.5" font-family="'Noto Sans KR'">BAT-01 → LV-104</text>
+</g>
+
+<!-- GCP-102 -->
+<rect x="780" y="290" width="116" height="54" rx="4" fill="#eff6ff" stroke="#2563eb" stroke-width="1.3" filter="url(#sh)"/>
+<text x="838" y="304" text-anchor="middle" fill="#1e3a5f" font-size="7.5" font-weight="700" font-family="'Noto Sans KR'">GCP-102 (ID02)</text>
+<text x="786" y="317" fill="#6b8ab0" font-size="6.5" font-family="'Noto Sans KR'">A : LV-102 (영덕)</text>
+<text x="786" y="328" fill="#6b8ab0" font-size="6.5" font-family="'Noto Sans KR'">B : LV-106 (포항)</text>
+<text x="786" y="339" fill="#6b8ab0" font-size="6.5" font-family="'Noto Sans KR'">C : ATS JETFAN</text>
+
+<!-- LEGEND -->
+<rect x="780" y="110" width="130" height="175" rx="4" fill="#f8fbff" stroke="#c7d9f5" stroke-width="1" filter="url(#sh)"/>
+<text x="845" y="123" text-anchor="middle" fill="#1e3a5f" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'" letter-spacing=".5">LEGEND</text>
+<line x1="786" y1="127" x2="904" y2="127" stroke="#dde8fb" stroke-width=".8"/>
+<line x1="788" y1="138" x2="808" y2="138" stroke="#2563eb" stroke-width="2.5"/>
+<text x="813" y="141" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">22.9kV 고압</text>
+<line x1="788" y1="151" x2="808" y2="151" stroke="#ca8a04" stroke-width="2.5"/>
+<text x="813" y="154" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">380V 저압</text>
+<rect x="788" y="159" width="18" height="11" rx="2" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+<text x="797" y="167" text-anchor="middle" fill="#2563eb" font-size="6" font-weight="700" font-family="'JetBrains Mono'">VCB</text>
+<text x="811" y="168" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">고압차단기</text>
+<rect x="788" y="174" width="18" height="11" rx="2" fill="#fefce8" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="797" y="182" text-anchor="middle" fill="#92400e" font-size="6" font-weight="700" font-family="'JetBrains Mono'">ACB</text>
+<text x="811" y="183" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">저압차단기</text>
+<circle cx="794" cy="195" r="5" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+<circle cx="794" cy="204" r="5" fill="#fefce8" stroke="#ca8a04" stroke-width="1.2"/>
+<text x="811" y="202" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">변압기 TR</text>
+<rect x="788" y="212" width="18" height="11" rx="2" fill="#fff7ed" stroke="#c2410c" stroke-width="1.2"/>
+<text x="797" y="220" text-anchor="middle" fill="#c2410c" font-size="5.5" font-weight="700" font-family="'JetBrains Mono'">CTTS</text>
+<text x="811" y="221" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">절환개폐기</text>
+<rect x="788" y="227" width="18" height="11" rx="2" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+<text x="797" y="235" text-anchor="middle" fill="#15803d" font-size="6" font-weight="700" font-family="'JetBrains Mono'">UPS</text>
+<text x="811" y="236" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">무정전전원</text>
+<line x1="786" y1="244" x2="904" y2="244" stroke="#dde8fb" stroke-width=".8"/>
+<rect x="788" y="249" width="18" height="11" rx="2" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.2"/>
+<text x="811" y="258" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">HV 계측 패널</text>
+<rect x="788" y="264" width="18" height="11" rx="2" fill="#fefce8" stroke="#fde68a" stroke-width="1.2"/>
+<text x="811" y="273" fill="#334155" font-size="6.5" font-family="'Noto Sans KR'">LV 계측 패널</text>
+
+<!-- 하단 정보 -->
+<line x1="0" y1="400" x2="920" y2="400" stroke="#dde8fb" stroke-width=".8"/>
+<text x="460" y="416" text-anchor="middle" fill="#9db4cc" font-size="7" font-family="'Noto Sans KR'">LISAN · 터널전기 SCADA · 단선결선도 (SLD)</text>
+<text x="460" y="430" text-anchor="middle" fill="#c7d9f5" font-size="6" font-family="'JetBrains Mono'">각 기기 우측 패널 = 실측 계측값 (V / A / KW / PF / MWh)</text>
+</svg>
+
+</div><!-- /dw -->
+
+<!-- 수전 현황 -->
+<div class="sh">
+  <div class="sbar"></div>
+  <span class="stitle">수전 현황</span>
+  <div class="stag">RECEIVING</div>
+</div>
+<div class="cd">
+  <div class="sub">KEPCO 수전 정보</div>
+  <div class="dr"><span class="dl">계통전압</span><span class="dv a">22.9 kV-Y</span></div>
+  <div class="dr"><span class="dl">수전방식</span><span class="dv n">3Ø 4Wire</span></div>
+  <div class="dr"><span class="dl">케이블</span><span class="dv n">CNCV-W 60㎟</span></div>
+  <div class="dr"><span class="dl">회선수</span><span class="dv n">2회선 (예비 1)</span></div>
+  <div class="dr"><span class="dl">LBS 정격</span><span class="dv n">25.8kV / 630A</span></div>
+  <div class="dr"><span class="dl">주파수</span><span class="dv g" id="d-kepco-hz">60.0 Hz</span></div>
+</div>
+<div class="cd">
+  <div class="sub">계통 상태</div>
+  <div class="sr ok"><div class="sdot"></div>KEPCO 수전 정상</div>
+  <div class="sr ok"><div class="sdot"></div>LBS 투입 정상</div>
+  <div class="sr err"><div class="sdot"></div>UPS-101 BYPASS 운전 — 점검 필요</div>
+</div>
+
+<div class="dvd"></div>
+
+<!-- 청하터널(주) -->
+<div class="sh">
+  <div class="sbar"></div>
+  <span class="stitle">청하터널(주)</span>
+  <div class="stag">LOAD MEASUREMENT</div>
+</div>
+
+<!-- HV-104 -->
+<div class="lc">
+  <div class="lh"><span class="lname">HV-104 · VCB 630A</span><span class="bdg g">운전중</span></div>
+  <div class="lsub">22.9kV 고압 주차단기 · ID01</div>
+  <table class="pt">
+    <thead><tr><th>항목</th><th>R-S</th><th>S-T</th><th>T-R</th></tr></thead>
+    <tbody>
+      <tr><td>전압 (V)</td><td class="pv" id="d-hv104-vrs">22,952</td><td class="pv" id="d-hv104-vst">22,927</td><td class="pv" id="d-hv104-vtr">23,014</td></tr>
+      <tr><td>전류 (A)</td><td class="pv" id="d-hv104-ir">2.2</td><td class="pv" id="d-hv104-is">2.3</td><td class="pv" id="d-hv104-it">2.2</td></tr>
+    </tbody>
+  </table>
+  <div class="mg">
+    <div class="mb"><div class="mlb">유효전력</div><div class="mv g" id="d-hv104-kw">87.4 KW</div></div>
+    <div class="mb"><div class="mlb">역률</div><div class="mv g" id="d-hv104-pf">0.99 PF</div></div>
+    <div class="mb"><div class="mlb">주파수</div><div class="mv a">60.0 Hz</div></div>
+    <div class="mb"><div class="mlb">누적전력량</div><div class="mv a" id="d-hv104-kwh">300.98 MWh</div></div>
+  </div>
+</div>
+
+<!-- HV-105 -->
+<div class="lc">
+  <div class="lh"><span class="lname">HV-105 · VCB 630A</span><span class="bdg g">운전중</span></div>
+  <div class="lsub">22.9kV 고압 차단기 · ID02</div>
+  <table class="pt">
+    <thead><tr><th>항목</th><th>R-S</th><th>S-T</th><th>T-R</th></tr></thead>
+    <tbody>
+      <tr><td>전압 (V)</td><td class="pv" id="d-hv105-vrs">22,940</td><td class="pv" id="d-hv105-vst">22,929</td><td class="pv" id="d-hv105-vtr">23,021</td></tr>
+      <tr><td>전류 (A)</td><td class="pv" id="d-hv105-ir">1.5</td><td class="pv" id="d-hv105-is">1.5</td><td class="pv" id="d-hv105-it">1.6</td></tr>
+    </tbody>
+  </table>
+  <div class="mg">
+    <div class="mb"><div class="mlb">유효전력</div><div class="mv g" id="d-hv105-kw">60.9 KW</div></div>
+    <div class="mb"><div class="mlb">역률</div><div class="mv g" id="d-hv105-pf">0.99 PF</div></div>
+    <div class="mb"><div class="mlb">주파수</div><div class="mv a">60.0 Hz</div></div>
+    <div class="mb"><div class="mlb">누적전력량</div><div class="mv a" id="d-hv105-kwh">206.31 MWh</div></div>
+  </div>
+</div>
+
+<!-- HV-106 -->
+<div class="lc">
+  <div class="lh"><span class="lname">HV-106 · VCB 630A</span><span class="bdg y">경부하</span></div>
+  <div class="lsub">22.9kV 고압 차단기 · ID03</div>
+  <table class="pt">
+    <thead><tr><th>항목</th><th>R-S</th><th>S-T</th><th>T-R</th></tr></thead>
+    <tbody>
+      <tr><td>전압 (V)</td><td class="pv" id="d-hv106-vrs">22,959</td><td class="pv" id="d-hv106-vst">22,959</td><td class="pv" id="d-hv106-vtr">23,022</td></tr>
+      <tr><td>전류 (A)</td><td class="pv lo" id="d-hv106-ir">0.7</td><td class="pv lo" id="d-hv106-is">0.7</td><td class="pv lo" id="d-hv106-it">0.6</td></tr>
+    </tbody>
+  </table>
+  <div class="mg">
+    <div class="mb"><div class="mlb">유효전력</div><div class="mv y" id="d-hv106-kw">25.9 KW</div></div>
+    <div class="mb"><div class="mlb">역률</div><div class="mv g" id="d-hv106-pf">0.99 PF</div></div>
+    <div class="mb"><div class="mlb">주파수</div><div class="mv a">60.0 Hz</div></div>
+    <div class="mb"><div class="mlb">누적전력량</div><div class="mv a" id="d-hv106-kwh">87.25 MWh</div></div>
+  </div>
+</div>
+
+<!-- HV-107 -->
+<div class="lc">
+  <div class="lh"><span class="lname">HV-107 · VCB 630A</span><span class="bdg r">미사용</span></div>
+  <div class="lsub">22.9kV 고압 차단기 · ID04 · PTR-102 동력용 예비</div>
+  <table class="pt">
+    <thead><tr><th>항목</th><th>R-S</th><th>S-T</th><th>T-R</th></tr></thead>
+    <tbody>
+      <tr><td>전압 (V)</td><td class="pv lo" id="d-hv107-vrs">22,949</td><td class="pv lo" id="d-hv107-vst">22,927</td><td class="pv lo" id="d-hv107-vtr">23,027</td></tr>
+      <tr><td>전류 (A)</td><td class="pv lo" id="d-hv107-ir">0.0</td><td class="pv lo" id="d-hv107-is">0.0</td><td class="pv lo" id="d-hv107-it">0.0</td></tr>
+    </tbody>
+  </table>
+  <div class="mg">
+    <div class="mb"><div class="mlb">유효전력</div><div class="mv r" id="d-hv107-kw">0.0 KW</div></div>
+    <div class="mb"><div class="mlb">역률</div><div class="mv" style="color:#9db4cc;" id="d-hv107-pf">—</div></div>
+    <div class="mb"><div class="mlb">주파수</div><div class="mv a">60.0 Hz</div></div>
+    <div class="mb"><div class="mlb">누적전력량</div><div class="mv" style="color:#6b8ab0;" id="d-hv107-kwh">4.67 MWh</div></div>
+  </div>
+</div>
+
+<!-- LV-101 -->
+<div class="lc">
+  <div class="lh"><span class="lname">LV-101 · ACB 630A</span><span class="bdg g">운전중</span></div>
+  <div class="lsub">LTR-101 2차측 저압 주차단기 · 조명등 · ID05</div>
+  <table class="pt">
+    <thead><tr><th>항목</th><th>R 상</th><th>S 상</th><th>T 상</th></tr></thead>
+    <tbody>
+      <tr><td>전압 (V)</td><td class="pv" id="d-lv101-vr">381</td><td class="pv" id="d-lv101-vs">381</td><td class="pv" id="d-lv101-vt">381</td></tr>
+      <tr><td>전류 (A)</td><td class="pv hi" id="d-lv101-ir">88.4</td><td class="pv hi" id="d-lv101-is">94.7</td><td class="pv hi" id="d-lv101-it">93.0</td></tr>
+    </tbody>
+  </table>
+  <div class="mg">
+    <div class="mb"><div class="mlb">유효전력</div><div class="mv g" id="d-lv101-kw">59.7 KW</div></div>
+    <div class="mb"><div class="mlb">역률</div><div class="mv g" id="d-lv101-pf">0.98 PF</div></div>
+    <div class="mb"><div class="mlb">주파수</div><div class="mv a">60.0 Hz</div></div>
+    <div class="mb"><div class="mlb">누적전력량</div><div class="mv a" id="d-lv101-kwh">201.90 MWh</div></div>
+  </div>
+</div>
+
+<!-- LV-105 -->
+<div class="lc">
+  <div class="lh"><span class="lname">LV-105 · ACB 630A</span><span class="bdg g">운전중</span></div>
+  <div class="lsub">PTR-101A 2차측 저압 주차단기 · 조명등 · ID06</div>
+  <table class="pt">
+    <thead><tr><th>항목</th><th>R 상</th><th>S 상</th><th>T 상</th></tr></thead>
+    <tbody>
+      <tr><td>전압 (V)</td><td class="pv" id="d-lv105-vr">381</td><td class="pv" id="d-lv105-vs">381</td><td class="pv" id="d-lv105-vt">382</td></tr>
+      <tr><td>전류 (A)</td><td class="pv hi" id="d-lv105-ir">47.0</td><td class="pv hi" id="d-lv105-is">38.1</td><td class="pv hi" id="d-lv105-it">31.4</td></tr>
+    </tbody>
+  </table>
+  <div class="mg">
+    <div class="mb"><div class="mlb">유효전력</div><div class="mv g" id="d-lv105-kw">25.2 KW</div></div>
+    <div class="mb"><div class="mlb">역률</div><div class="mv g" id="d-lv105-pf">0.99 PF</div></div>
+    <div class="mb"><div class="mlb">주파수</div><div class="mv a">60.0 Hz</div></div>
+    <div class="mb"><div class="mlb">누적전력량</div><div class="mv a" id="d-lv105-kwh">84.99 MWh</div></div>
+  </div>
+</div>
+
+<div class="dvd"></div>
+
+<!-- 청하터널(부) -->
+<div class="sh solar">
+  <div class="sbar"></div>
+  <span class="stitle">청하터널(부)</span>
+  <div class="stag">SOLAR PV</div>
+</div>
+<div class="cd">
+  <div class="sub">태양광 #1</div>
+  <div class="dr"><span class="dl">PV 전압</span><span class="dv a" id="d-s1-pv-v">568.0 V</span></div>
+  <div class="dr"><span class="dl">PV 전류</span><span class="dv g" id="d-s1-pv-i">52.0 A</span></div>
+  <div class="dr"><span class="dl">PV 출력</span><span class="dv y" id="d-s1-pv-kw">29.7 KW</span></div>
+  <div class="dr"><span class="dl">인버터 출력전압</span><span class="dv a" id="d-s1-inv-v">377.0 V</span></div>
+  <div class="dr"><span class="dl">인버터 출력전류</span><span class="dv g" id="d-s1-inv-i">45.0 A</span></div>
+  <div class="dr"><span class="dl">인버터 출력</span><span class="dv y" id="d-s1-inv-kw">29.1 KW</span></div>
+  <div class="dr"><span class="dl">효율</span><span class="dv g" id="d-s1-eff">100.0 %</span></div>
+  <div class="dr"><span class="dl">주파수</span><span class="dv n" id="d-s1-hz">60.0 Hz</span></div>
+  <div class="dr"><span class="dl">누적발전량</span><span class="dv a" id="d-s1-kwh">24,769.5 KWh</span></div>
+</div>
+<div class="cd">
+  <div class="sub">태양광 #2</div>
+  <div class="dr"><span class="dl">PV 전압</span><span class="dv a" id="d-s2-pv-v">478.0 V</span></div>
+  <div class="dr"><span class="dl">PV 전류</span><span class="dv g" id="d-s2-pv-i">20.0 A</span></div>
+  <div class="dr"><span class="dl">PV 출력</span><span class="dv y" id="d-s2-pv-kw">9.5 KW</span></div>
+  <div class="dr"><span class="dl">인버터 출력전압</span><span class="dv a" id="d-s2-inv-v">378.0 V</span></div>
+  <div class="dr"><span class="dl">인버터 출력전류</span><span class="dv g" id="d-s2-inv-i">14.0 A</span></div>
+  <div class="dr"><span class="dl">인버터 출력</span><span class="dv y" id="d-s2-inv-kw">9.3 KW</span></div>
+  <div class="dr"><span class="dl">효율</span><span class="dv g" id="d-s2-eff">100.0 %</span></div>
+  <div class="dr"><span class="dl">주파수</span><span class="dv n" id="d-s2-hz">60.0 Hz</span></div>
+  <div class="dr"><span class="dl">누적발전량</span><span class="dv a" id="d-s2-kwh">8,944.0 KWh</span></div>
+</div>
+<div class="cd">
+  <div class="sub">발전 합계</div>
+  <div class="dr"><span class="dl">총 출력</span><span class="dv y" id="d-s-total-kw">39.2 KW</span></div>
+  <div class="dr"><span class="dl">총 누적발전량</span><span class="dv a" id="d-s-total-kwh">33,713.5 KWh</span></div>
+  <div class="dr"><span class="dl">평균 효율</span><span class="dv g">100.0 %</span></div>
+</div>
+
+</div><!-- /body -->
+
+<!-- ══════════════════════════════
+     JavaScript
+══════════════════════════════ -->
+<script>
+/* ══════════════════════════════
+   시계
+══════════════════════════════ */
+(function tick(){
+  document.getElementById('clk').textContent =
+    new Date().toLocaleString('ko-KR',{hour12:false});
+  setTimeout(tick,1000);
+})();
+
+/* ══════════════════════════════
+   갤러리 상태
+══════════════════════════════ */
+var gallery      = [];
+var TUNNEL_ID    = 'heunghae';   // [{name, size, type, dataURL, time}]
+var selectedIdx  = -1;   // 현재 선택된 인덱스
+var currentDataURL = null;
+var dz = document.getElementById('drop-zone');
+
+/* ══════════════════════════════
+   툴바 토글
+══════════════════════════════ */
+document.getElementById('img-topbar').onclick = function(){
+  document.getElementById('img-toolbar').classList.toggle('open');
+};
+
+/* ══════════════════════════════
+   API Key 토글
+══════════════════════════════ */
+document.getElementById('ak-toggle').onclick = function(){
+  var inp = document.getElementById('api-key-input');
+  if(inp.type==='password'){inp.type='text';this.textContent='숨김';}
+  else{inp.type='password';this.textContent='표시';}
+};
+
+/* ══════════════════════════════
+   파일 선택 (multiple)
+══════════════════════════════ */
+document.getElementById('file-input').onchange = function(){
+  if(this.files && this.files.length) addFiles(Array.from(this.files));
+  this.value = '';
+};
+
+/* ══════════════════════════════
+   드래그 앤 드롭
+══════════════════════════════ */
+dz.addEventListener('dragenter',function(e){e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragover', function(e){e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',function(e){e.preventDefault();dz.classList.remove('over');});
+dz.addEventListener('drop',function(e){
+  e.preventDefault(); dz.classList.remove('over');
+  var files = e.dataTransfer && Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('image/');});
+  if(files && files.length) addFiles(files);
+});
+
+/* ══════════════════════════════
+   파일 추가 (여러 장)
+══════════════════════════════ */
+function addFiles(files){
+  var remaining = files.length;
+  files.forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var item = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        dataURL: ev.target.result,
+        time: new Date().toLocaleTimeString('ko-KR',{hour12:false})
+      };
+      gallery.push(item);
+      remaining--;
+      if(remaining === 0) renderGallery();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ══════════════════════════════
+   갤러리 렌더링
+══════════════════════════════ */
+function renderGallery(){
+  var list = document.getElementById('gal-list');
+  var galEl = document.getElementById('img-gallery');
+
+  if(gallery.length === 0){
+    galEl.style.display = 'none';
+    document.getElementById('dz-icon').textContent  = '🖼';
+    document.getElementById('dz-title').textContent = '클릭 또는 이미지를 여기에 드래그';
+    document.getElementById('dz-sub').textContent   = '여러 장 동시 선택 가능 · SCADA 화면 캡처 · 계측기 사진';
+    document.getElementById('img-result').classList.remove('show');
+    updateBadge();
+    return;
+  }
+
+  galEl.style.display = 'block';
+  document.getElementById('dz-icon').textContent  = '➕';
+  document.getElementById('dz-title').textContent = '추가 업로드 (클릭 또는 드래그)';
+  document.getElementById('dz-sub').textContent   = '기존 이미지에 추가됩니다';
+  document.getElementById('gal-count').textContent = gallery.length + '장';
+
+  list.innerHTML = '';
+  gallery.forEach(function(item, idx){
+    var div = document.createElement('div');
+    div.className = 'gal-item' + (idx === selectedIdx ? ' selected' : '');
+    div.innerHTML =
+      '<div class="gal-del" data-idx="'+idx+'">✕</div>' +
+      '<img class="gal-thumb" src="'+item.dataURL+'" alt="'+item.name+'">' +
+      '<div class="gal-name">'+item.name+'</div>';
+
+    /* 썸네일 클릭 → 선택 */
+    div.onclick = function(e){
+      if(e.target.classList.contains('gal-del')) return;
+      selectImage(idx);
+    };
+    /* 삭제 버튼 */
+    div.querySelector('.gal-del').onclick = function(e){
+      e.stopPropagation();
+      deleteImage(parseInt(this.getAttribute('data-idx')));
+    };
+    list.appendChild(div);
+  });
+
+  /* 마지막 추가 이미지 자동 선택 */
+  if(selectedIdx === -1 || selectedIdx >= gallery.length){
+    selectImage(gallery.length - 1);
+  } else {
+    selectImage(selectedIdx);
+  }
+  updateBadge();
+}
+
+/* ══════════════════════════════
+   이미지 선택
+══════════════════════════════ */
+function selectImage(idx){
+  if(idx < 0 || idx >= gallery.length) return;
+  selectedIdx    = idx;
+  currentDataURL = gallery[idx].dataURL;
+  var item = gallery[idx];
+
+  /* 선택 표시 */
+  var items = document.getElementById('gal-list').querySelectorAll('.gal-item');
+  items.forEach(function(el,i){ el.classList.toggle('selected', i===idx); });
+
+  /* 미리보기 */
+  var prev = document.getElementById('img-preview');
+  prev.src = item.dataURL; prev.style.display='block';
+
+  /* 정보 */
+  var nm = item.name;
+  document.getElementById('ir-name').textContent = nm.length>26?nm.slice(0,26)+'…':nm;
+  document.getElementById('ir-size').textContent = item.size<1048576
+    ?(item.size/1024).toFixed(1)+' KB':(item.size/1048576).toFixed(2)+' MB';
+  document.getElementById('ir-type').textContent = item.type.replace('image/','').toUpperCase();
+  document.getElementById('ir-time').textContent = item.time;
+
+  /* 해상도 */
+  var tmp = new Image();
+  tmp.onload = function(){
+    document.getElementById('ir-res').textContent = tmp.naturalWidth+' × '+tmp.naturalHeight+' px';
+  };
+  tmp.src = item.dataURL;
+
+  document.getElementById('img-result').classList.add('show');
+  var vr = document.getElementById('val-report');
+  vr.className=''; vr.innerHTML='';
+}
+
+/* ══════════════════════════════
+   이미지 삭제
+══════════════════════════════ */
+function deleteImage(idx){
+  gallery.splice(idx,1);
+  if(gallery.length === 0){
+    selectedIdx = -1; currentDataURL = null;
+    document.getElementById('img-result').classList.remove('show');
+  } else {
+    selectedIdx = Math.min(selectedIdx, gallery.length-1);
+  }
+  renderGallery();
+}
+
+/* ══════════════════════════════
+   전체 삭제
+══════════════════════════════ */
+document.getElementById('gal-clear-all').onclick = function(){
+  gallery=[]; selectedIdx=-1; currentDataURL=null;
+  renderGallery();
+  document.getElementById('img-overlay').classList.remove('show');
+  document.getElementById('dw').style.display='';
+};
+
+/* ══════════════════════════════
+   배지 업데이트
+══════════════════════════════ */
+function updateBadge(){
+  var b = document.getElementById('tb-status');
+  if(gallery.length===0){
+    b.textContent='이미지 없음'; b.style.cssText='';
+  } else {
+    b.textContent=gallery.length+'장 등록됨';
+    b.style.cssText='background:#d1fae5;border-color:#6ee7b7;color:#065f46;font-weight:700;';
+  }
+}
+
+/* ══════════════════════════════
+   단선도 위에 표시
+══════════════════════════════ */
+document.getElementById('btn-apply').onclick = function(){
+  if(!currentDataURL) return;
+  document.getElementById('overlay-img').src = currentDataURL;
+  document.getElementById('img-overlay').classList.add('show');
+  document.getElementById('dw').style.display = 'none';
+  document.getElementById('img-toolbar').classList.remove('open');
+  var b = document.getElementById('tb-status');
+  b.textContent = (selectedIdx+1)+'번 이미지 표시중';
+  b.style.cssText='background:#eff6ff;border-color:#bfdbfe;color:#1d6fcf;font-weight:700;';
+  document.getElementById('img-overlay').scrollIntoView({behavior:'smooth'});
+};
+
+/* ══════════════════════════════
+   선택 삭제
+══════════════════════════════ */
+document.getElementById('btn-clear').onclick = function(){
+  if(selectedIdx >= 0) deleteImage(selectedIdx);
+};
+
+/* ══════════════════════════════
+   오버레이 닫기
+══════════════════════════════ */
+document.getElementById('overlay-close').onclick = function(){
+  document.getElementById('img-overlay').classList.remove('show');
+  document.getElementById('dw').style.display='';
+};
+
+/* ══════════════════════════════
+   AI 분석
+══════════════════════════════ */
+document.getElementById('btn-analyze').onclick = function(){
+  if(!currentDataURL){showToast('⚠ 이미지를 먼저 선택하세요','#b45309');return;}
+  var key = document.getElementById('api-key-input').value.trim();
+  if(!key){showToast('⚠ API Key를 입력해주세요','#b45309');document.getElementById('api-key-input').focus();return;}
+  if(!key.startsWith('sk-ant-')){showToast('⚠ API Key 형식이 올바르지 않습니다','#b45309');return;}
+  runAnalysis(key);
+};
+
+/* ══════════════════════════════
+   AI 분석 실행
+══════════════════════════════ */
+function runAnalysis(apiKey){
+  var btn=document.getElementById('btn-analyze');
+  var load=document.getElementById('ai-loading');
+  var step=document.getElementById('ai-step');
+  btn.disabled=true; btn.textContent='분석 중...';
+  load.classList.add('show');
+  step.textContent='이미지 전송 중...';
+  var steps=['SCADA 화면 인식 중...','전압 · 전류 수치 판독 중...','전력 · 역률 데이터 추출 중...','태양광 인버터 데이터 확인 중...','검증 로직 적용 중...'];
+  var si=0;
+  var stepTimer=setInterval(function(){si=(si+1)%steps.length;step.textContent=steps[si];},1200);
+  var b64=currentDataURL.split(',')[1];
+  var mime=currentDataURL.split(';')[0].split(':')[1];
+  var prompt=['이 이미지는 한국 터널 전기실 SCADA 화면입니다.','','[판독 원칙]','1. 보이는 숫자만 입력. 불확실하면 null.','2. 단위 제외, 숫자만 입력.','3. 쉼표 포함 숫자 그대로 유지 (예: 22,952).','4. 소수점 원본 유지 (예: 0.99, 88.4).','5. 흐리거나 가린 경우 null.','','[유효 범위 — 범위 밖이면 null]','• 고압 전압: 21,500 ~ 24,000 V','• 저압 전압: 350 ~ 420 V','• 고압 전류: 0.0 ~ 50.0 A','• 저압 전류: 0 ~ 630 A','• 유효전력: 0 ~ 1000 KW','• 역률(PF): 0.80 ~ 1.00','• 주파수: 59.0 ~ 61.0 Hz','','JSON만 응답. 마크다운 금지.',
+  '{','  "kepco_hz": null,','  "hv104_vrs": null, "hv104_vst": null, "hv104_vtr": null,','  "hv104_ir": null, "hv104_is": null, "hv104_it": null,','  "hv104_kw": null, "hv104_pf": null, "hv104_kwh": null,','  "hv105_vrs": null, "hv105_vst": null, "hv105_vtr": null,','  "hv105_ir": null, "hv105_is": null, "hv105_it": null,','  "hv105_kw": null, "hv105_pf": null, "hv105_kwh": null,','  "hv106_vrs": null, "hv106_vst": null, "hv106_vtr": null,','  "hv106_ir": null, "hv106_is": null, "hv106_it": null,','  "hv106_kw": null, "hv106_pf": null, "hv106_kwh": null,','  "hv107_vrs": null, "hv107_vst": null, "hv107_vtr": null,','  "hv107_ir": null, "hv107_is": null, "hv107_it": null,','  "hv107_kw": null, "hv107_pf": null, "hv107_kwh": null,','  "lv101_vr": null, "lv101_vs": null, "lv101_vt": null,','  "lv101_ir": null, "lv101_is": null, "lv101_it": null,','  "lv101_kw": null, "lv101_pf": null, "lv101_kwh": null,','  "lv105_vr": null, "lv105_vs": null, "lv105_vt": null,','  "lv105_ir": null, "lv105_is": null, "lv105_it": null,','  "lv105_kw": null, "lv105_pf": null, "lv105_kwh": null,','  "solar1_pv_v": null, "solar1_pv_i": null, "solar1_pv_kw": null,','  "solar1_inv_v": null, "solar1_inv_i": null, "solar1_inv_kw": null,','  "solar1_eff": null, "solar1_hz": null, "solar1_kwh": null,','  "solar2_pv_v": null, "solar2_pv_i": null, "solar2_pv_kw": null,','  "solar2_inv_v": null, "solar2_inv_i": null, "solar2_inv_kw": null,','  "solar2_eff": null, "solar2_hz": null, "solar2_kwh": null','}'].join('\n');
+  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:2000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompt}]}]})})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    clearInterval(stepTimer);load.classList.remove('show');
+    btn.disabled=false;btn.textContent='🤖 AI 데이터 분석 · 자동 입력';
+    if(data.error){showToast('❌ API 오류: '+data.error.message,'#991b1b');return;}
+    var txt='';
+    if(data.content&&data.content[0]&&data.content[0].text)txt=data.content[0].text.trim();
+    var clean=txt.replace(/```json|```/g,'').trim();
+    var raw;try{raw=JSON.parse(clean);}catch(e){showToast('❌ 응답 파싱 실패','#991b1b');return;}
+    var result=validateData(raw);
+    applyData(result.data);
+    showReport(result);
+    var b2=document.getElementById('tb-status');
+    b2.textContent='데이터 적용됨';b2.style.cssText='background:#d1fae5;border-color:#6ee7b7;color:#065f46;font-weight:700;';
+    var msg=result.nulled.length>0?'✅ 분석 완료 · '+result.applied+'개 적용 · '+result.nulled.length+'개 범위 오류':'✅ 분석 완료 · '+result.applied+'개 항목 적용';
+    showToast(msg,result.nulled.length>0?'#78350f':'#065f46');
+    setTimeout(function(){document.getElementById('body').scrollIntoView({behavior:'smooth'});},600);
+  })
+  .catch(function(err){
+    clearInterval(stepTimer);load.classList.remove('show');
+    btn.disabled=false;btn.textContent='🤖 AI 데이터 분석 · 자동 입력';
+    showToast('❌ 네트워크 오류: '+err.message,'#991b1b');
+  });
+}
+
+/* ══════════════════════════════
+   범위 검증
+══════════════════════════════ */
+function validateData(d){
+  var nulled=[],applied=0;
+  var rules={hv104_vrs:[21500,24000,'고압전압'],hv104_vst:[21500,24000,'고압전압'],hv104_vtr:[21500,24000,'고압전압'],hv105_vrs:[21500,24000,'고압전압'],hv105_vst:[21500,24000,'고압전압'],hv105_vtr:[21500,24000,'고압전압'],hv106_vrs:[21500,24000,'고압전압'],hv106_vst:[21500,24000,'고압전압'],hv106_vtr:[21500,24000,'고압전압'],hv107_vrs:[21500,24000,'고압전압'],hv107_vst:[21500,24000,'고압전압'],hv107_vtr:[21500,24000,'고압전압'],hv104_ir:[0,50,'고압전류'],hv104_is:[0,50,'고압전류'],hv104_it:[0,50,'고압전류'],hv105_ir:[0,50,'고압전류'],hv105_is:[0,50,'고압전류'],hv105_it:[0,50,'고압전류'],hv106_ir:[0,50,'고압전류'],hv106_is:[0,50,'고압전류'],hv106_it:[0,50,'고압전류'],hv107_ir:[0,50,'고압전류'],hv107_is:[0,50,'고압전류'],hv107_it:[0,50,'고압전류'],hv104_kw:[0,1000,'유효전력'],hv104_pf:[0.8,1.0,'역률'],hv105_kw:[0,1000,'유효전력'],hv105_pf:[0.8,1.0,'역률'],hv106_kw:[0,1000,'유효전력'],hv106_pf:[0.8,1.0,'역률'],hv107_kw:[0,1000,'유효전력'],hv107_pf:[0.8,1.0,'역률'],hv104_kwh:[0,9999,'누적전력량'],hv105_kwh:[0,9999,'누적전력량'],hv106_kwh:[0,9999,'누적전력량'],hv107_kwh:[0,9999,'누적전력량'],lv101_vr:[350,420,'저압전압'],lv101_vs:[350,420,'저압전압'],lv101_vt:[350,420,'저압전압'],lv105_vr:[350,420,'저압전압'],lv105_vs:[350,420,'저압전압'],lv105_vt:[350,420,'저압전압'],lv101_ir:[0,630,'저압전류'],lv101_is:[0,630,'저압전류'],lv101_it:[0,630,'저압전류'],lv105_ir:[0,630,'저압전류'],lv105_is:[0,630,'저압전류'],lv105_it:[0,630,'저압전류'],lv101_kw:[0,500,'유효전력'],lv101_pf:[0.8,1.0,'역률'],lv105_kw:[0,500,'유효전력'],lv105_pf:[0.8,1.0,'역률'],lv101_kwh:[0,9999,'누적전력량'],lv105_kwh:[0,9999,'누적전력량'],kepco_hz:[59,61,'주파수'],solar1_pv_v:[0,800,'PV전압'],solar1_pv_i:[0,100,'PV전류'],solar1_pv_kw:[0,100,'PV출력'],solar1_inv_kw:[0,100,'인버터출력'],solar1_eff:[0,100,'효율'],solar1_kwh:[0,99999,'누적발전량'],solar2_pv_v:[0,800,'PV전압'],solar2_pv_i:[0,100,'PV전류'],solar2_pv_kw:[0,100,'PV출력'],solar2_inv_kw:[0,100,'인버터출력'],solar2_eff:[0,100,'효율'],solar2_kwh:[0,99999,'누적발전량']};
+  for(var key in d){
+    if(d[key]===null||d[key]===undefined)continue;
+    var num=parseFloat(String(d[key]).replace(/,/g,''));
+    if(isNaN(num)){d[key]=null;continue;}
+    if(rules[key]){var mn=rules[key][0],mx=rules[key][1],lb=rules[key][2];if(num<mn||num>mx){nulled.push(key+' ('+lb+'): '+d[key]);d[key]=null;}else applied++;}
+    else applied++;
+  }
+  return{data:d,nulled:nulled,applied:applied};
+}
+
+/* ══════════════════════════════
+   데이터 적용
+══════════════════════════════ */
+function applyData(d){
+  function set(id,val,unit){if(val===null||val===undefined)return;var el=document.getElementById(id);if(!el)return;el.textContent=unit?val+' '+unit:val;el.style.transition='background .25s';el.style.background='rgba(5,150,105,.18)';el.style.borderRadius='3px';setTimeout(function(){el.style.background='';},1400);}
+  set('d-kepco-hz',d.kepco_hz,'Hz');
+  set('d-hv104-vrs',d.hv104_vrs,'V');set('d-hv104-vst',d.hv104_vst,'V');set('d-hv104-vtr',d.hv104_vtr,'V');
+  if(d.hv104_ir&&d.hv104_is&&d.hv104_it)set('d-hv104-i',d.hv104_ir+' / '+d.hv104_is+' / '+d.hv104_it,'A');
+  set('d-hv104-kw',d.hv104_kw,'KW');set('d-hv104-pf',d.hv104_pf,'PF');set('d-hv104-kwh',d.hv104_kwh,'MWh');
+  set('d-hv105-vrs',d.hv105_vrs);set('d-hv105-vst',d.hv105_vst);set('d-hv105-vtr',d.hv105_vtr);
+  set('d-hv105-ir',d.hv105_ir);set('d-hv105-is',d.hv105_is);set('d-hv105-it',d.hv105_it);
+  set('d-hv105-kw',d.hv105_kw,'KW');set('d-hv105-pf',d.hv105_pf,'PF');set('d-hv105-kwh',d.hv105_kwh,'MWh');
+  set('d-hv106-vrs',d.hv106_vrs);set('d-hv106-vst',d.hv106_vst);set('d-hv106-vtr',d.hv106_vtr);
+  set('d-hv106-ir',d.hv106_ir);set('d-hv106-is',d.hv106_is);set('d-hv106-it',d.hv106_it);
+  set('d-hv106-kw',d.hv106_kw,'KW');set('d-hv106-pf',d.hv106_pf,'PF');set('d-hv106-kwh',d.hv106_kwh,'MWh');
+  set('d-hv107-vrs',d.hv107_vrs);set('d-hv107-vst',d.hv107_vst);set('d-hv107-vtr',d.hv107_vtr);
+  set('d-hv107-ir',d.hv107_ir);set('d-hv107-is',d.hv107_is);set('d-hv107-it',d.hv107_it);
+  set('d-hv107-kw',d.hv107_kw,'KW');set('d-hv107-pf',d.hv107_pf,'PF');set('d-hv107-kwh',d.hv107_kwh,'MWh');
+  set('d-lv101-vr',d.lv101_vr);set('d-lv101-vs',d.lv101_vs);set('d-lv101-vt',d.lv101_vt);
+  set('d-lv101-ir',d.lv101_ir);set('d-lv101-is',d.lv101_is);set('d-lv101-it',d.lv101_it);
+  set('d-lv101-kw',d.lv101_kw,'KW');set('d-lv101-pf',d.lv101_pf,'PF');set('d-lv101-kwh',d.lv101_kwh,'MWh');
+  set('d-lv105-vr',d.lv105_vr);set('d-lv105-vs',d.lv105_vs);set('d-lv105-vt',d.lv105_vt);
+  set('d-lv105-ir',d.lv105_ir);set('d-lv105-is',d.lv105_is);set('d-lv105-it',d.lv105_it);
+  set('d-lv105-kw',d.lv105_kw,'KW');set('d-lv105-pf',d.lv105_pf,'PF');set('d-lv105-kwh',d.lv105_kwh,'MWh');
+  set('d-s1-pv-v',d.solar1_pv_v,'V');set('d-s1-pv-i',d.solar1_pv_i,'A');set('d-s1-pv-kw',d.solar1_pv_kw,'KW');
+  set('d-s1-inv-v',d.solar1_inv_v,'V');set('d-s1-inv-i',d.solar1_inv_i,'A');set('d-s1-inv-kw',d.solar1_inv_kw,'KW');
+  set('d-s1-eff',d.solar1_eff,'%');set('d-s1-hz',d.solar1_hz||d.kepco_hz,'Hz');set('d-s1-kwh',d.solar1_kwh,'KWh');
+  set('d-s2-pv-v',d.solar2_pv_v,'V');set('d-s2-pv-i',d.solar2_pv_i,'A');set('d-s2-pv-kw',d.solar2_pv_kw,'KW');
+  set('d-s2-inv-v',d.solar2_inv_v,'V');set('d-s2-inv-i',d.solar2_inv_i,'A');set('d-s2-inv-kw',d.solar2_inv_kw,'KW');
+  set('d-s2-eff',d.solar2_eff,'%');set('d-s2-hz',d.solar2_hz||d.kepco_hz,'Hz');set('d-s2-kwh',d.solar2_kwh,'KWh');
+  var t1=parseFloat(d.solar1_pv_kw||0),t2=parseFloat(d.solar2_pv_kw||0);
+  if(t1||t2)set('d-s-total-kw',(t1+t2).toFixed(1),'KW');
+  var k1=parseFloat(d.solar1_kwh||0),k2=parseFloat(d.solar2_kwh||0);
+  if(k1||k2)set('d-s-total-kwh',(k1+k2).toFixed(1),'KWh');
+}
+
+/* ══════════════════════════════
+   검증 리포트
+══════════════════════════════ */
+function showReport(result){
+  var vr=document.getElementById('val-report');
+  if(result.nulled.length===0){
+    vr.className='ok show';
+    vr.innerHTML='<div class="vr-title">✅ 검증 통과 — 모든 데이터 정상</div><span class="vr-line">총 '+result.applied+'개 항목 적용</span>';
+  } else {
+    vr.className='warn show';
+    var html='<div class="vr-title">⚠ '+result.nulled.length+'개 범위 오류</div>';
+    result.nulled.forEach(function(m){html+='<span class="vr-line">· '+m+'</span>';});
+    html+='<span class="vr-line" style="font-weight:600;margin-top:3px;">정상 적용: '+result.applied+'개</span>';
+    vr.innerHTML=html;
+  }
+}
+
+/* ══════════════════════════════
+   토스트
+══════════════════════════════ */
+function showToast(msg,bg){
+  var t=document.getElementById('ai-toast');
+  t.textContent=msg;t.style.background=bg||'#065f46';
+  t.style.display='block';t.style.animation='none';
+  void t.offsetWidth;t.style.animation='fadeUp .3s ease';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(function(){t.style.display='none';},3500);
+}
+</script>
+</body>
+</html>
